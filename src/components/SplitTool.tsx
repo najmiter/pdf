@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Scissors, X, Download, Plus, Trash2 } from 'lucide-react';
+import { Download, Plus, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { PDFProcessor } from '../utils/pdfProcessor';
 import type { PDFFile } from '../types';
@@ -125,109 +125,118 @@ export const SplitTool: React.FC<SplitToolProps> = ({ file, onClose }) => {
       </div>
 
       <div className="space-y-4 max-h-96 overflow-y-auto">
-          <div className="space-y-4">
-            {ranges.map((range, index) => (
-              <div key={range.id} className="bg-gray-50 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-medium text-gray-900">Part {index + 1}</h3>
-                  {ranges.length > 1 && (
-                    <button
-                      onClick={() => removeRange(range.id)}
-                      className="p-1 text-gray-400 hover:text-red-500 transition-colors duration-200">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
+        {ranges.map((range, index) => (
+          <div key={range.id} className="bg-gray-50 rounded-lg p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="font-medium text-gray-900">Part {index + 1}</h4>
+              {ranges.length > 1 && (
+                <button onClick={() => removeRange(range.id)} className="p-1 text-gray-400 hover:text-red-500">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
+            </div>
 
-                <div className="grid grid-cols-2 gap-3 mb-3">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Start Page</label>
-                    <input
-                      type="number"
-                      min={1}
-                      max={file.pages}
-                      value={range.start}
-                      onChange={(e) => updateRange(range.id, 'start', parseInt(e.target.value) || 1)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">End Page</label>
-                    <input
-                      type="number"
-                      min={1}
-                      max={file.pages}
-                      value={range.end}
-                      onChange={(e) => updateRange(range.id, 'end', parseInt(e.target.value) || file.pages)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Output Filename</label>
-                  <input
-                    type="text"
-                    value={range.name}
-                    onChange={(e) => updateRange(range.id, 'name', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                    placeholder={`part${index + 1}.pdf`}
-                  />
-                </div>
-
-                <div className="mt-2 text-sm text-gray-600">{range.end - range.start + 1} page(s)</div>
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Start Page</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={file.pages}
+                  value={range.start}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value) || 1;
+                    const clampedVal = Math.max(1, Math.min(file.pages, val));
+                    updateRange(range.id, 'start', clampedVal);
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
               </div>
-            ))}
-          </div>
-
-          <button
-            onClick={addRange}
-            className="w-full mt-4 p-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-orange-300 hover:text-orange-600 transition-colors duration-200 flex items-center justify-center space-x-2">
-            <Plus className="w-4 h-4" />
-            <span>Add Another Range</span>
-          </button>
-
-          <div className="mt-4 bg-orange-50 rounded-lg p-3">
-            <div className="text-sm text-orange-700">
-              <div className="flex justify-between">
-                <span>Total pages covered:</span>
-                <span className="font-medium">
-                  {getCoveredPages()} / {file.pages}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span>Output files:</span>
-                <span className="font-medium">{ranges.length}</span>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">End Page</label>
+                <input
+                  type="number"
+                  min={range.start}
+                  max={file.pages}
+                  value={range.end}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value) || file.pages;
+                    const clampedVal = Math.max(range.start, Math.min(file.pages, val));
+                    updateRange(range.id, 'end', clampedVal);
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
               </div>
             </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Output Filename</label>
+              <input
+                type="text"
+                value={range.name}
+                onChange={(e) => updateRange(range.id, 'name', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder={`part${index + 1}.pdf`}
+              />
+            </div>
+
+            <div className="mt-2 text-sm text-gray-600">
+              {range.end - range.start + 1} page(s) • Pages {range.start}-{range.end}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <button
+        onClick={addRange}
+        className="w-full p-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-blue-300 hover:text-blue-600 flex items-center justify-center space-x-2">
+        <Plus className="w-4 h-4" />
+        <span>Add Another Range</span>
+      </button>
+
+      <div className="bg-gray-50 rounded-lg p-4">
+        <div className="grid grid-cols-3 gap-4 text-center">
+          <div>
+            <div className="text-lg font-semibold text-gray-900">{file.pages}</div>
+            <div className="text-sm text-gray-600">Total Pages</div>
+          </div>
+          <div>
+            <div className="text-lg font-semibold text-gray-900">{getCoveredPages()}</div>
+            <div className="text-sm text-gray-600">Pages to Split</div>
+          </div>
+          <div>
+            <div className="text-lg font-semibold text-gray-900">{ranges.length}</div>
+            <div className="text-sm text-gray-600">Output Files</div>
           </div>
         </div>
+      </div>
 
-        <div className="flex items-center justify-between p-6 border-t bg-gray-50">
-          <div className="text-sm text-gray-600">Split into {ranges.length} separate PDF file(s)</div>
-          <div className="flex items-center space-x-3">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200">
-              Cancel
-            </button>
-            <button
-              onClick={handleSplit}
-              disabled={isProcessing}
-              className="flex items-center space-x-2 px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors duration-200">
-              {isProcessing ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>Splitting...</span>
-                </>
-              ) : (
-                <>
-                  <Download className="w-4 h-4" />
-                  <span>Split & Download</span>
-                </>
-              )}
-            </button>
-          </div>
+      <div className="flex items-center justify-between pt-4 border-t">
+        <div className="text-sm text-gray-600">
+          Split into {ranges.length} separate PDF file{ranges.length !== 1 ? 's' : ''}
+        </div>
+        <div className="flex items-center space-x-3">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">
+            Cancel
+          </button>
+          <button
+            onClick={handleSplit}
+            disabled={isProcessing}
+            className="flex items-center space-x-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed">
+            {isProcessing ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <span>Splitting...</span>
+              </>
+            ) : (
+              <>
+                <Download className="w-4 h-4" />
+                <span>Split & Download</span>
+              </>
+            )}
+          </button>
         </div>
       </div>
     </div>

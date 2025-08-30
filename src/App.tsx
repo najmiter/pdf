@@ -249,7 +249,7 @@ function App() {
                     isSelected={selectedFiles.has(file.id)}
                     onSelect={() => handleFileSelect(file.id)}
                     onRemove={() => handleFileRemove(file.id)}
-                    onInfo={() => openTool('info', file)}
+                    // onInfo={() => openTool('info', file)}
                   />
                 ))}
               </div>

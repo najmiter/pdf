@@ -34,7 +34,7 @@
           :page="pageNumber"
           :scale="1.1"
           :width="220"
-          class="rounded-lg max-w-60 overflow-hidden border-2 grid place-content-center w-fit shadow-sm"
+          class="rounded-lg max-w-60 overflow-hidden grid place-content-center w-fit shadow-sm"
           @rendering="isLoading = true"
           @rendered="isLoading = false"
           @error="hasError = true" />
@@ -66,7 +66,7 @@
     </div>
 
     <!-- Page Info -->
-    <div class="p-3 space-y-1 border border-t">
+    <div class="p-3 space-y-1 border-t border-t-foreground/10">
       <div class="text-sm font-medium text-foreground truncate" :title="`Page ${pageNumber}`">
         Page {{ pageNumber }}
       </div>

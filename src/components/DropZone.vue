@@ -24,7 +24,11 @@
         </p>
       </div>
 
-      <Button variant="outline" @click="triggerFileInput" :disabled="isProcessing">
+      <Button
+        variant="default"
+        @click="triggerFileInput"
+        :disabled="isProcessing"
+        class="bg-gradient-to-r text-white from-primary to-secondary">
         <Icon icon="lucide:folder-open" class="mr-2 h-4 w-4" />
         Browse Files
       </Button>

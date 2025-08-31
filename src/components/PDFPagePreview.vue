@@ -32,7 +32,7 @@
         <VPdf
           :source="pdfUrl"
           :page="pageNumber"
-          :scale="2.5"
+          :scale="1.1"
           :width="220"
           class="rounded-lg max-w-60 overflow-hidden border-2 grid place-content-center w-fit shadow-sm"
           @rendering="isLoading = true"

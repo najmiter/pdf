@@ -14,14 +14,14 @@
         </div>
 
         <!-- Progress Bar (if progress is provided) -->
-        <div v-if="props.progress !== null" class="w-full space-y-2">
-          <div class="flex justify-between text-xs text-gray-500">
+        <div v-if="props.progress !== null" class="w-full max-w-sm mx-auto space-y-2">
+          <div class="flex justify-between text-xs text-white">
             <span>{{ props.currentStep }}</span>
-            <span>{{ Math.round(props.progress) }}%</span>
+            <span>{{ Math.round(props?.progress ?? 0) }}%</span>
           </div>
           <div class="w-full bg-gray-200 rounded-full h-2">
             <div
-              class="bg-blue-600 h-2 rounded-full transition-all duration-300 ease-out"
+              class="bg-[#FFAD66] h-2 rounded-full transition-all duration-300 ease-out"
               :style="{ width: `${props.progress}%` }"></div>
           </div>
         </div>

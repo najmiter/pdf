@@ -8,10 +8,24 @@
             <Icon icon="lucide:file-text" class="h-6 w-6 text-primary" />
             <h1 class="text-xl font-bold">PDF Tool</h1>
           </div>
-          <div v-if="files.length > 0" class="text-sm text-muted-foreground">
-            {{ files.length }} file{{ files.length === 1 ? '' : 's' }} • {{ totalPages }} page{{
-              totalPages === 1 ? '' : 's'
-            }}
+          <div class="flex items-center space-x-4">
+            <div v-if="files.length > 0" class="text-sm text-muted-foreground">
+              {{ files.length }} file{{ files.length === 1 ? '' : 's' }} • {{ totalPages }} page{{
+                totalPages === 1 ? '' : 's'
+              }}
+            </div>
+            <div class="flex gap-2 items-center">
+              <Button variant="ghost" size="icon" @click="toggleDarkMode" class="w-9 h-9">
+                <Icon :icon="isDark ? 'lucide:sun' : 'lucide:moon'" class="h-4 w-4" />
+                <span class="sr-only">Toggle theme</span>
+              </Button>
+              <a href="https://github.com/najmiter/pdf" target="_blank">
+                <Button variant="ghost" size="icon" class="w-9 h-9">
+                  <Icon icon="lucide:github" class="h-4 w-4" />
+                  <span class="sr-only">Github</span>
+                </Button>
+              </a>
+            </div>
           </div>
         </div>
       </div>
@@ -104,6 +118,7 @@
 import { ref, watch } from 'vue';
 import { Icon } from '@iconify/vue';
 import { usePDFTools } from '@/composables/usePDFTools';
+import { useDarkMode } from '@/composables/useDarkMode';
 import DropZone from '@/components/DropZone.vue';
 import PDFPagePreview from '@/components/PDFPagePreview.vue';
 import ToolsPanel from '@/components/ToolsPanel.vue';
@@ -121,6 +136,8 @@ const {
   removePages,
   downloadBlob,
 } = usePDFTools();
+
+const { isDark, toggleDarkMode } = useDarkMode();
 
 const fileInputRef = ref<HTMLInputElement>();
 

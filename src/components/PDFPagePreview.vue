@@ -18,7 +18,7 @@
       <!-- Selection Indicator -->
       <div
         v-if="isSelected"
-        class="absolute top-2 right-2 bg-primary text-white text-xs px-2 py-1 rounded-full z-10 shadow-sm flex items-center justify-center">
+        class="absolute top-2 right-2 bg-primary text-background text-xs p-1 rounded-full z-10 shadow-sm flex items-center justify-center">
         <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
           <path
             fill-rule="evenodd"

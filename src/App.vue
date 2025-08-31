@@ -1,0 +1,246 @@
+<template>
+  <div class="min-h-screen bg-background">
+    <!-- Header -->
+    <header class="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div class="container mx-auto px-4 py-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <Icon icon="lucide:file-text" class="h-6 w-6 text-primary" />
+            <h1 class="text-xl font-bold">PDF Tool</h1>
+          </div>
+          <div v-if="files.length > 0" class="text-sm text-muted-foreground">
+            {{ files.length }} file{{ files.length === 1 ? '' : 's' }} • {{ totalPages }} page{{
+              totalPages === 1 ? '' : 's'
+            }}
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="flex h-[calc(100vh-73px)]">
+      <!-- Main Content Area -->
+      <main class="flex-1 p-6 overflow-auto">
+        <!-- Drop Zone (shown when no files) -->
+        <div v-if="files.length === 0" class="h-full flex items-center justify-center">
+          <DropZone :isProcessing="isProcessing" @files-selected="handleFilesSelected" class="w-full max-w-2xl" />
+        </div>
+
+        <!-- PDF Pages Grid -->
+        <div v-else class="space-y-6">
+          <!-- File Management -->
+          <div class="flex items-center justify-between">
+            <h2 class="text-lg font-semibold">PDF Pages</h2>
+            <div class="flex items-center space-x-2">
+              <Button variant="outline" @click="addMoreFiles">
+                <Icon icon="lucide:plus" class="mr-2 h-4 w-4" />
+                Add More Files
+              </Button>
+              <Button variant="outline" @click="clearAllFiles">
+                <Icon icon="lucide:trash-2" class="mr-2 h-4 w-4" />
+                Clear All
+              </Button>
+            </div>
+          </div>
+
+          <!-- Pages by File -->
+          <div v-for="file in files" :key="file.id" class="space-y-4">
+            <div class="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+              <div class="flex items-center space-x-3">
+                <Icon icon="lucide:file-text" class="h-5 w-5 text-primary" />
+                <div>
+                  <h3 class="font-medium">{{ file.name }}</h3>
+                  <p class="text-sm text-muted-foreground">{{ file.pages }} pages • {{ formatFileSize(file.size) }}</p>
+                </div>
+              </div>
+              <Button variant="ghost" size="sm" @click="removeFile(file.id)">
+                <Icon icon="lucide:x" class="h-4 w-4" />
+              </Button>
+            </div>
+
+            <!-- Page Grid for this file -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+              <PDFPagePreview
+                v-for="pageNum in file.pages"
+                :key="`${file.id}-${pageNum}`"
+                :pageNumber="pageNum"
+                :fileName="file.name"
+                :pdfDocument="file.doc"
+                :isSelected="selectedPages.has(getGlobalPageIndex(file.id, pageNum))"
+                @select="togglePageSelection(file.id, pageNum)" />
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <!-- Tools Panel -->
+      <ToolsPanel
+        :isOpen="showToolsPanel"
+        :files="files"
+        :isProcessing="isProcessing"
+        :selectedPageNumbers="Array.from(selectedPages)"
+        @close="showToolsPanel = false"
+        @merge="handleMerge"
+        @split="handleSplit"
+        @removePages="handleRemovePages"
+        @rotatePages="handleRotatePages"
+        @clearSelection="clearPageSelection" />
+    </div>
+
+    <!-- Hidden file input for adding more files -->
+    <input
+      ref="fileInputRef"
+      type="file"
+      multiple
+      accept=".pdf,application/pdf"
+      class="hidden"
+      @change="handleFileInput" />
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, watch } from 'vue';
+import { Icon } from '@iconify/vue';
+import { usePDFTools } from '@/composables/usePDFTools';
+import DropZone from '@/components/DropZone.vue';
+import PDFPagePreview from '@/components/PDFPagePreview.vue';
+import ToolsPanel from '@/components/ToolsPanel.vue';
+import Button from '@/components/ui/Button.vue';
+
+const {
+  files,
+  selectedPages,
+  isProcessing,
+  totalPages,
+  parsePageRange,
+  addFiles,
+  removeFile,
+  mergePDFs,
+  splitPDF,
+  removePages,
+  downloadBlob,
+} = usePDFTools();
+
+const showToolsPanel = ref(false);
+const fileInputRef = ref<HTMLInputElement>();
+
+// Auto-open tools panel when files are added
+watch(
+  files,
+  (newFiles) => {
+    if (newFiles.length > 0 && !showToolsPanel.value) {
+      showToolsPanel.value = true;
+    }
+  },
+  { deep: true }
+);
+
+const handleFilesSelected = async (fileList: FileList) => {
+  await addFiles(fileList);
+};
+
+const addMoreFiles = () => {
+  fileInputRef.value?.click();
+};
+
+const handleFileInput = (e: Event) => {
+  const target = e.target as HTMLInputElement;
+  if (target.files) {
+    handleFilesSelected(target.files);
+  }
+};
+
+const clearAllFiles = () => {
+  files.value = [];
+  selectedPages.value.clear();
+  showToolsPanel.value = false;
+};
+
+const formatFileSize = (bytes: number): string => {
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let size = bytes;
+  let unitIndex = 0;
+
+  while (size >= 1024 && unitIndex < units.length - 1) {
+    size /= 1024;
+    unitIndex++;
+  }
+
+  return `${size.toFixed(1)} ${units[unitIndex]}`;
+};
+
+const getGlobalPageIndex = (fileId: string, pageNumber: number): number => {
+  let globalIndex = 0;
+  for (const file of files.value) {
+    if (file.id === fileId) {
+      return globalIndex + pageNumber;
+    }
+    globalIndex += file.pages;
+  }
+  return globalIndex;
+};
+
+const togglePageSelection = (fileId: string, pageNumber: number) => {
+  const globalIndex = getGlobalPageIndex(fileId, pageNumber);
+  if (selectedPages.value.has(globalIndex)) {
+    selectedPages.value.delete(globalIndex);
+  } else {
+    selectedPages.value.add(globalIndex);
+  }
+};
+
+const clearPageSelection = () => {
+  selectedPages.value.clear();
+};
+
+const handleMerge = async (fileIds: string[]) => {
+  try {
+    const mergedBlob = await mergePDFs(fileIds);
+    downloadBlob(mergedBlob, 'merged.pdf');
+  } catch (error) {
+    console.error('Error merging PDFs:', error);
+  }
+};
+
+const handleSplit = async (fileId: string, rangesString: string) => {
+  try {
+    const ranges = parsePageRange(rangesString);
+    const splitBlobs = await splitPDF(fileId, ranges);
+
+    splitBlobs.forEach((blob, index) => {
+      downloadBlob(blob, `split-${index + 1}.pdf`);
+    });
+  } catch (error) {
+    console.error('Error splitting PDF:', error);
+  }
+};
+
+const handleRemovePages = async (fileId: string, pagesString: string) => {
+  try {
+    const ranges = parsePageRange(pagesString);
+    const pagesToRemove: number[] = [];
+
+    ranges.forEach((range) => {
+      for (let i = range.start; i <= range.end; i++) {
+        pagesToRemove.push(i);
+      }
+    });
+
+    const resultBlob = await removePages(fileId, pagesToRemove);
+    const originalFile = files.value.find((f) => f.id === fileId);
+    downloadBlob(resultBlob, `${originalFile?.name.replace('.pdf', '')}-modified.pdf`);
+  } catch (error) {
+    console.error('Error removing pages:', error);
+  }
+};
+
+const handleRotatePages = async (pageNumbers: number[], rotation: number) => {
+  try {
+    // For now, we'll just clear the selection as a placeholder
+    // In a full implementation, you'd need to handle rotation per file
+    clearPageSelection();
+    console.log('Rotate pages:', pageNumbers, 'by', rotation, 'degrees');
+  } catch (error) {
+    console.error('Error rotating pages:', error);
+  }
+};
+</script>

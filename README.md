@@ -1,6 +1,6 @@
 # PDF Tool
 
-![Logo](public/icon.svg)
+<p align="center"><img src="public/icon.svg" width="100" height="100" alt="Logo"></p>
 
 A free online PDF editor that allows you to merge, split, and edit PDF files with an easy drag-and-drop interface.
 

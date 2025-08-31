@@ -75,16 +75,14 @@
             </div>
 
             <!-- Page Grid for this file -->
-            <div class="flex flex-wrap gap-4">
-              <PDFPagePreview
-                v-for="pageNum in file.pages"
-                :key="`${file.id}-${pageNum}`"
-                :pageNumber="pageNum"
-                :fileName="file.name"
-                :pdfUrl="file.url"
-                :isSelected="selectedPages.has(getGlobalPageIndex(file.id, pageNum))"
-                @select="togglePageSelection(file.id, pageNum)" />
-            </div>
+            <LazyPDFPageGrid
+              :fileId="file.id"
+              :fileName="file.name"
+              :pdfUrl="file.url"
+              :totalPages="file.pages"
+              :selectedPages="selectedPages"
+              :getGlobalPageIndex="getGlobalPageIndex"
+              @select="(pageNum) => togglePageSelection(file.id, pageNum)" />
           </div>
         </div>
       </main>
@@ -121,7 +119,7 @@ import { Icon } from '@iconify/vue';
 import { usePDFTools } from '@/composables/usePDFTools';
 import { useDarkMode } from '@/composables/useDarkMode';
 import DropZone from '@/components/DropZone.vue';
-import PDFPagePreview from '@/components/PDFPagePreview.vue';
+import LazyPDFPageGrid from '@/components/LazyPDFPageGrid.vue';
 import ToolsPanel from '@/components/ToolsPanel.vue';
 import Button from '@/components/ui/Button.vue';
 
@@ -143,12 +141,10 @@ const { isDark, toggleDarkMode } = useDarkMode();
 
 const fileInputRef = ref<HTMLInputElement>();
 
-// Auto-open tools panel when files are added
 watch(
   files,
   (newFiles) => {
     if (newFiles.length > 0) {
-      // Tools panel is always shown when files are present
     }
   },
   { deep: true }

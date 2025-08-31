@@ -32,9 +32,9 @@
         <VPdf
           :source="pdfUrl"
           :page="pageNumber"
-          :scale="5.5"
+          :scale="2.5"
           :width="200"
-          class="rounded shadow-sm"
+          class="rounded w-52 shadow-sm"
           @rendering="isLoading = true"
           @rendered="isLoading = false"
           @error="hasError = true" />

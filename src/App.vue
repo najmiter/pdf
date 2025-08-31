@@ -22,7 +22,10 @@
       <main class="flex-1 p-6 overflow-auto">
         <!-- Drop Zone (shown when no files) -->
         <div v-if="files.length === 0" class="h-full flex items-center justify-center">
-          <DropZone :isProcessing="isProcessing" @files-selected="handleFilesSelected" class="w-full max-w-2xl" />
+          <DropZone
+            :isProcessing="isProcessing"
+            @files-selected="handleFilesSelected"
+            class="w-full h-full grid place-content-center" />
         </div>
 
         <!-- PDF Pages Grid -->

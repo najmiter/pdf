@@ -75,6 +75,7 @@
             :disabled="selectedPages.size === 0 || isProcessing"
             class="w-full"
             size="sm"
+            type="button"
             variant="destructive">
             <Icon icon="lucide:trash-2" class="mr-2 h-4 w-4" />
             Remove Selected Pages

@@ -2,7 +2,7 @@
   <div
     :class="
       cn(
-        'border-2 border-dashed rounded-lg transition-colors duration-200 p-8',
+        'rounded-lg transition-colors duration-200 p-8',
         isDragOver ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50',
         props.class
       )

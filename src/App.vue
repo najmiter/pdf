@@ -15,12 +15,12 @@
               }}
             </div>
             <div class="flex gap-2 items-center">
-              <Button variant="ghost" size="icon" @click="toggleDarkMode" class="w-9 h-9">
+              <Button variant="soft" size="icon" @click="toggleDarkMode" class="w-9 h-9">
                 <Icon :icon="isDark ? 'lucide:sun' : 'lucide:moon'" class="h-4 w-4" />
                 <span class="sr-only">Toggle theme</span>
               </Button>
               <a href="https://github.com/najmiter/pdf" target="_blank">
-                <Button variant="ghost" size="icon" class="w-9 h-9">
+                <Button variant="soft" size="icon" class="w-9 h-9">
                   <Icon icon="lucide:github" class="h-4 w-4" />
                   <span class="sr-only">Github</span>
                 </Button>
@@ -48,13 +48,21 @@
           <div class="flex items-center justify-between">
             <h2 class="text-lg font-semibold">PDF Pages</h2>
             <div class="flex items-center space-x-2">
-              <Button variant="outline" @click="addMoreFiles">
+              <Button variant="soft" @click="addMoreFiles">
                 <Icon icon="lucide:plus" class="mr-2 h-4 w-4" />
                 Add More Files
               </Button>
-              <Button variant="outline" @click="clearAllFiles">
+              <Button variant="soft" @click="clearAllFiles">
                 <Icon icon="lucide:trash-2" class="mr-2 h-4 w-4" />
                 Clear All
+              </Button>
+              <Button variant="soft" @click="selectAllPages" :disabled="files.length === 0">
+                <Icon icon="lucide:mouse-pointer-click" class="mr-2 h-4 w-4" />
+                Select All Pages
+              </Button>
+              <Button variant="soft" @click="clearPageSelection" :disabled="selectedPages.size === 0">
+                <Icon icon="lucide:x" class="mr-2 h-4 w-4" />
+                Clear Selection
               </Button>
             </div>
           </div>
@@ -98,8 +106,6 @@
         :removePages="removePages"
         :convertToImages="convertToImages"
         :downloadBlob="downloadBlob"
-        @selectAll="selectAllPages"
-        @clearSelection="clearPageSelection"
         @progress="handleProgress" />
     </div>
 

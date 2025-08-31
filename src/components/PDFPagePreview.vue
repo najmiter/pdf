@@ -11,7 +11,7 @@
     <div class="aspect-[3/4] rounded-t-lg overflow-hidden relative">
       <!-- Page Number Badge -->
       <div
-        class="absolute top-2 left-2 bg-foreground/30 text-white text-xs font-medium px-2 py-1 rounded-md z-10 shadow-sm">
+        class="absolute top-2 left-2 bg-foreground/30 backdrop-blur-3xl text-white text-xs font-medium px-2 py-1 rounded-md z-10 shadow-sm">
         {{ pageNumber }}
       </div>
 
@@ -33,8 +33,8 @@
           :source="pdfUrl"
           :page="pageNumber"
           :scale="2.5"
-          :width="200"
-          class="rounded w-52 shadow-sm"
+          :width="220"
+          class="rounded-lg max-w-60 overflow-hidden border-2 grid place-content-center w-fit shadow-sm"
           @rendering="isLoading = true"
           @rendered="isLoading = false"
           @error="hasError = true" />
@@ -95,9 +95,7 @@ const props = withDefaults(defineProps<Props>(), {
   isSelected: false,
 });
 
-defineEmits<{
-  select: [];
-}>();
+defineEmits<{ select: [] }>();
 
 const isLoading = ref(true);
 const hasError = ref(false);

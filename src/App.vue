@@ -115,7 +115,7 @@
 
   <!-- Loading Overlay -->
   <LoadingOverlay
-    :isVisible="isProcessing"
+    v-if="isProcessing"
     :title="getLoadingTitle()"
     :message="getLoadingMessage()"
     :progress="processingProgress"

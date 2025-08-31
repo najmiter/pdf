@@ -1,274 +1,275 @@
 <template>
-  <Sheet :open="isOpen" @close="$emit('close')">
-    <div class="flex flex-col h-full">
-      <!-- Header -->
-      <div class="flex items-center justify-between mb-6">
-        <h2 class="text-lg font-semibold">PDF Tools</h2>
-        <Button variant="ghost" size="icon" @click="$emit('close')">
-          <Icon icon="lucide:x" class="h-4 w-4" />
+  <div class="w-80 border-l bg-background/50 backdrop-blur-sm p-6 h-full overflow-y-auto">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="text-lg font-semibold">PDF Tools</h2>
+    </div>
+
+    <!-- Tool Cards -->
+    <div class="space-y-4">
+      <!-- Merge Tool -->
+      <div class="p-4 border rounded-lg space-y-3">
+        <div class="flex items-center space-x-2">
+          <Icon icon="lucide:file-plus" class="h-5 w-5 text-primary" />
+          <h3 class="font-medium">Merge PDFs</h3>
+        </div>
+        <p class="text-sm text-muted-foreground">Combine multiple PDF files into one</p>
+        <Button @click="handleMerge" :disabled="files.length < 2 || isProcessing" class="w-full" size="sm">
+          <Icon icon="lucide:download" class="mr-2 h-4 w-4" />
+          Merge All Files
         </Button>
       </div>
 
-      <!-- Tool Selection -->
-      <div v-if="!selectedTool" class="space-y-3">
-        <div
-          v-for="tool in availableTools"
-          :key="tool.id"
-          class="p-4 border rounded-lg cursor-pointer hover:bg-accent transition-colors"
-          @click="selectTool(tool.id)">
-          <div class="flex items-center space-x-3">
-            <Icon :icon="tool.icon" class="h-5 w-5 text-primary" />
-            <div>
-              <h3 class="font-medium">{{ tool.name }}</h3>
-              <p class="text-sm text-muted-foreground">{{ tool.description }}</p>
+      <!-- Split Tool -->
+      <div class="p-4 border rounded-lg space-y-3">
+        <div class="flex items-center space-x-2">
+          <Icon icon="lucide:scissors" class="h-5 w-5 text-primary" />
+          <h3 class="font-medium">Split PDF</h3>
+        </div>
+        <p class="text-sm text-muted-foreground">Extract pages from PDF files</p>
+
+        <div v-if="selectedPages.size > 0" class="space-y-3">
+          <p class="text-xs text-muted-foreground">{{ selectedPages.size }} page(s) selected</p>
+
+          <!-- Split Options (when multiple pages selected) -->
+          <div v-if="selectedPages.size > 1" class="space-y-2">
+            <div class="text-xs font-medium text-muted-foreground">Output Options:</div>
+            <div class="space-y-1">
+              <label class="flex items-center space-x-2 text-xs">
+                <input v-model="splitMergeOption" type="radio" value="merged" class="w-3 h-3" />
+                <span>One merged PDF</span>
+              </label>
+              <label class="flex items-center space-x-2 text-xs">
+                <input v-model="splitMergeOption" type="radio" value="separate" class="w-3 h-3" />
+                <span>Separate PDFs for each page</span>
+              </label>
             </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Tool Interface -->
-      <div v-else class="flex-1 flex flex-col">
-        <!-- Back Button -->
-        <Button variant="ghost" class="mb-4 self-start" @click="selectedTool = null">
-          <Icon icon="lucide:arrow-left" class="mr-2 h-4 w-4" />
-          Back to Tools
-        </Button>
-
-        <!-- Merge Tool -->
-        <div v-if="selectedTool === 'merge'" class="space-y-4">
-          <h3 class="font-semibold">Merge PDFs</h3>
-          <p class="text-sm text-muted-foreground">Select files to merge in order:</p>
-
-          <div class="space-y-2">
-            <div v-for="file in files" :key="file.id" class="flex items-center space-x-3 p-3 border rounded">
-              <input
-                type="checkbox"
-                :id="file.id"
-                v-model="selectedFiles"
-                :value="file.id"
-                class="rounded border-gray-300" />
-              <label :for="file.id" class="flex-1 text-sm">{{ file.name }}</label>
-              <span class="text-xs text-muted-foreground">{{ file.pages }} pages</span>
-            </div>
-          </div>
-
-          <Button @click="handleMerge" :disabled="selectedFiles.length < 2 || isProcessing" class="w-full">
-            <Icon icon="lucide:download" class="mr-2 h-4 w-4" />
-            Download Merged PDF
-          </Button>
-
-          <!-- Debug info for merge -->
-          <div class="text-xs text-muted-foreground mt-2 p-2 bg-yellow-50 rounded">
-            Debug: selectedFiles={{ selectedFiles.length }}, isProcessing={{ isProcessing }}, disabled={{
-              selectedFiles.length < 2 || isProcessing
-            }}
-          </div>
-        </div>
-
-        <!-- Split Tool -->
-        <div v-if="selectedTool === 'split'" class="space-y-4">
-          <h3 class="font-semibold">Split PDF</h3>
-          <p class="text-sm text-muted-foreground">Select a file and specify page ranges:</p>
-
-          <select v-model="selectedFileForSplit" class="w-full p-2 border rounded">
-            <option value="">Select a file</option>
-            <option v-for="file in files" :key="file.id" :value="file.id">
-              {{ file.name }} ({{ file.pages }} pages)
-            </option>
-          </select>
-
-          <div class="space-y-2">
-            <label class="text-sm font-medium">Page Ranges (e.g., 1-5, 7, 10-12):</label>
-            <input
-              v-model="pageRanges"
-              type="text"
-              placeholder="1-5, 7, 10-12"
-              class="w-full p-2 border rounded text-sm" />
-            <p class="text-xs text-muted-foreground">
-              Use commas to separate ranges. Examples: "1-5" for pages 1 to 5, "1,3,5" for individual pages
-            </p>
-          </div>
-
-          <Button @click="handleSplit" :disabled="!selectedFileForSplit || !pageRanges || isProcessing" class="w-full">
-            <Icon icon="lucide:scissors" class="mr-2 h-4 w-4" />
-            Split PDF
-          </Button>
-
-          <!-- Debug info for split -->
-          <div class="text-xs text-muted-foreground mt-2 p-2 bg-yellow-50 rounded">
-            Debug: selectedFile={{ !!selectedFileForSplit }}, pageRanges={{ !!pageRanges }}, isProcessing={{
-              isProcessing
-            }}, disabled={{ !selectedFileForSplit || !pageRanges || isProcessing }}
-          </div>
-        </div>
-
-        <!-- Remove Pages Tool -->
-        <div v-if="selectedTool === 'remove'" class="space-y-4">
-          <h3 class="font-semibold">Remove Pages</h3>
-          <p class="text-sm text-muted-foreground">Select a file and specify pages to remove:</p>
-
-          <select v-model="selectedFileForRemove" class="w-full p-2 border rounded">
-            <option value="">Select a file</option>
-            <option v-for="file in files" :key="file.id" :value="file.id">
-              {{ file.name }} ({{ file.pages }} pages)
-            </option>
-          </select>
-
-          <div class="space-y-2">
-            <label class="text-sm font-medium">Pages to Remove (e.g., 1,3,5-7):</label>
-            <input
-              v-model="pagesToRemove"
-              type="text"
-              placeholder="1,3,5-7"
-              class="w-full p-2 border rounded text-sm" />
           </div>
 
           <Button
-            @click="handleRemovePages"
-            :disabled="!selectedFileForRemove || !pagesToRemove || isProcessing"
-            class="w-full">
-            <Icon icon="lucide:trash-2" class="mr-2 h-4 w-4" />
-            Remove Pages
+            @click="handleSplitSelected"
+            :disabled="selectedPages.size === 0 || isProcessing"
+            class="w-full"
+            size="sm">
+            <Icon icon="lucide:scissors" class="mr-2 h-4 w-4" />
+            <span v-if="selectedPages.size === 1">Extract Selected Page</span>
+            <span v-else-if="splitMergeOption === 'merged'">Extract & Merge Pages</span>
+            <span v-else>Extract Pages Separately</span>
           </Button>
-
-          <!-- Debug info for remove -->
-          <div class="text-xs text-muted-foreground mt-2 p-2 bg-yellow-50 rounded">
-            Debug: selectedFile={{ !!selectedFileForRemove }}, pagesToRemove={{ !!pagesToRemove }}, isProcessing={{
-              isProcessing
-            }}, disabled={{ !selectedFileForRemove || !pagesToRemove || isProcessing }}
-          </div>
         </div>
-
-        <!-- Rotate Tool -->
-        <div v-if="selectedTool === 'rotate'" class="space-y-4">
-          <h3 class="font-semibold">Rotate Pages</h3>
-          <p class="text-sm text-muted-foreground">Select pages to rotate:</p>
-
-          <div class="text-center text-muted-foreground">
-            <p>Click on pages in the main view to select them for rotation</p>
-            <div v-if="selectedPageNumbers.length > 0" class="mt-2">
-              <span class="text-sm">Selected pages: {{ selectedPageNumbers.join(', ') }}</span>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-2 gap-2">
-            <Button variant="outline" @click="rotateSelected(90)">
-              <Icon icon="lucide:rotate-cw" class="mr-2 h-4 w-4" />
-              90° Right
-            </Button>
-            <Button variant="outline" @click="rotateSelected(-90)">
-              <Icon icon="lucide:rotate-ccw" class="mr-2 h-4 w-4" />
-              90° Left
-            </Button>
-            <Button variant="outline" @click="rotateSelected(180)">
-              <Icon icon="lucide:rotate-cw" class="mr-2 h-4 w-4" />
-              180°
-            </Button>
-            <Button variant="outline" @click="clearSelection">
-              <Icon icon="lucide:x" class="mr-2 h-4 w-4" />
-              Clear
-            </Button>
-          </div>
-        </div>
+        <div v-else class="text-xs text-muted-foreground text-center py-2">Select pages to split</div>
       </div>
 
-      <!-- Processing Indicator -->
-      <div v-if="isProcessing" class="mt-4 p-4 bg-muted rounded-lg">
-        <div class="flex items-center space-x-3">
-          <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-primary" />
-          <span class="text-sm">Processing...</span>
+      <!-- Remove Pages Tool -->
+      <div class="p-4 border rounded-lg space-y-3">
+        <div class="flex items-center space-x-2">
+          <Icon icon="lucide:trash-2" class="h-5 w-5 text-primary" />
+          <h3 class="font-medium">Remove Pages</h3>
+        </div>
+        <p class="text-sm text-muted-foreground">Delete selected pages from PDFs</p>
+
+        <div v-if="selectedPages.size > 0" class="space-y-2">
+          <p class="text-xs text-muted-foreground">{{ selectedPages.size }} page(s) selected</p>
+          <Button
+            @click="handleRemoveSelected"
+            :disabled="selectedPages.size === 0 || isProcessing"
+            class="w-full"
+            size="sm"
+            variant="destructive">
+            <Icon icon="lucide:trash-2" class="mr-2 h-4 w-4" />
+            Remove Selected Pages
+          </Button>
+        </div>
+        <div v-else class="text-xs text-muted-foreground text-center py-2">Select pages to remove</div>
+      </div>
+
+      <!-- Selection Tools -->
+      <div class="p-4 border rounded-lg space-y-3">
+        <div class="flex items-center space-x-2">
+          <Icon icon="lucide:mouse-pointer-click" class="h-5 w-5 text-primary" />
+          <h3 class="font-medium">Selection</h3>
+        </div>
+
+        <div class="space-y-2">
+          <Button @click="selectAllPages" :disabled="files.length === 0" variant="outline" class="w-full" size="sm">
+            Select All Pages
+          </Button>
+          <Button
+            @click="clearPageSelection"
+            :disabled="selectedPages.size === 0"
+            variant="outline"
+            class="w-full"
+            size="sm">
+            Clear Selection
+          </Button>
         </div>
       </div>
     </div>
-  </Sheet>
+
+    <!-- Processing Indicator -->
+    <div v-if="isProcessing" class="mt-4 p-4 bg-muted rounded-lg">
+      <div class="flex items-center space-x-3">
+        <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-primary" />
+        <span class="text-sm">Processing...</span>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
 import { Icon } from '@iconify/vue';
-import Sheet from '@/components/ui/Sheet.vue';
 import Button from '@/components/ui/Button.vue';
 import type { PDFFile } from '@/composables/usePDFTools';
 
 interface Props {
-  isOpen: boolean;
   files: PDFFile[];
   isProcessing: boolean;
-  selectedPageNumbers: number[];
+  selectedPages: Set<number>;
+  mergePDFs: (fileIds: string[]) => Promise<Blob>;
+  splitPDF: (fileId: string, ranges: { start: number; end: number }[]) => Promise<Blob[]>;
+  removePages: (fileId: string, pages: number[]) => Promise<Blob>;
+  downloadBlob: (blob: Blob, filename: string) => void;
 }
 
 const props = defineProps<Props>();
 
 const emit = defineEmits<{
-  close: [];
-  merge: [fileIds: string[]];
-  split: [fileId: string, ranges: string];
-  removePages: [fileId: string, pages: string];
-  rotatePages: [pages: number[], rotation: number];
+  selectAll: [];
   clearSelection: [];
 }>();
 
-const selectedTool = ref<string | null>(null);
-const selectedFiles = ref<string[]>([]);
-const selectedFileForSplit = ref('');
-const selectedFileForRemove = ref('');
-const pageRanges = ref('');
-const pagesToRemove = ref('');
+const splitMergeOption = ref<'merged' | 'separate'>('merged');
 
-const availableTools = [
-  {
-    id: 'merge',
-    name: 'Merge PDFs',
-    description: 'Combine multiple PDF files into one',
-    icon: 'lucide:file-plus',
-  },
-  {
-    id: 'split',
-    name: 'Split PDF',
-    description: 'Split a PDF into multiple files by page ranges',
-    icon: 'lucide:scissors',
-  },
-  {
-    id: 'remove',
-    name: 'Remove Pages',
-    description: 'Remove specific pages from a PDF',
-    icon: 'lucide:trash-2',
-  },
-  {
-    id: 'rotate',
-    name: 'Rotate Pages',
-    description: 'Rotate selected pages',
-    icon: 'lucide:rotate-cw',
-  },
-];
-
-const selectTool = (toolId: string) => {
-  selectedTool.value = toolId;
-  // Reset tool-specific selections
-  selectedFiles.value = [];
-  selectedFileForSplit.value = '';
-  selectedFileForRemove.value = '';
-  pageRanges.value = '';
-  pagesToRemove.value = '';
+const handleMerge = async () => {
+  try {
+    const mergedBlob = await props.mergePDFs(props.files.map((f) => f.id));
+    props.downloadBlob(mergedBlob, 'merged.pdf');
+  } catch (error) {}
 };
 
-const handleMerge = () => {
-  emit('merge', selectedFiles.value);
+const handleSplitSelected = async () => {
+  if (props.selectedPages.size === 0) return;
+
+  try {
+    // Group selected pages by file
+    const pagesByFile = new Map<string, number[]>();
+
+    let globalIndex = 1;
+    for (const file of props.files) {
+      const filePages: number[] = [];
+      for (let page = 1; page <= file.pages; page++) {
+        if (props.selectedPages.has(globalIndex)) {
+          filePages.push(page);
+        }
+        globalIndex++;
+      }
+      if (filePages.length > 0) {
+        pagesByFile.set(file.id, filePages);
+      }
+    }
+
+    // If user wants merged output and has multiple pages selected
+    if (splitMergeOption.value === 'merged' && props.selectedPages.size > 1) {
+      // Create individual page blobs first
+      const allPageBlobs: Blob[] = [];
+      const selectedPageInfo: string[] = [];
+
+      for (const [fileId, pages] of pagesByFile) {
+        const file = props.files.find((f) => f.id === fileId);
+        if (file) {
+          const ranges = pages.map((p) => ({ start: p, end: p }));
+          const splitBlobs = await props.splitPDF(fileId, ranges);
+
+          splitBlobs.forEach((blob, index) => {
+            allPageBlobs.push(blob);
+            selectedPageInfo.push(`${file.name.replace('.pdf', '')}_page_${pages[index]}`);
+          });
+        }
+      }
+
+      // Merge all the extracted pages into one PDF
+      if (allPageBlobs.length > 0) {
+        // Create a temporary merged PDF by loading each blob and merging
+        const { PDFDocument } = await import('pdf-lib');
+        const mergedPdf = await PDFDocument.create();
+
+        for (const blob of allPageBlobs) {
+          const arrayBuffer = await blob.arrayBuffer();
+          const sourcePdf = await PDFDocument.load(arrayBuffer);
+          const [page] = await mergedPdf.copyPages(sourcePdf, [0]);
+          mergedPdf.addPage(page);
+        }
+
+        const mergedBytes = await mergedPdf.save();
+        const mergedBlob = new Blob([new Uint8Array(mergedBytes)], { type: 'application/pdf' });
+
+        const filename =
+          selectedPageInfo.length > 1
+            ? `merged_selected_pages_${selectedPageInfo.length}_pages.pdf`
+            : `${selectedPageInfo[0]}.pdf`;
+
+        props.downloadBlob(mergedBlob, filename);
+      }
+    } else {
+      // Create separate files for each page (original behavior)
+      for (const [fileId, pages] of pagesByFile) {
+        const file = props.files.find((f) => f.id === fileId);
+        if (file) {
+          const ranges = pages.map((p) => ({ start: p, end: p }));
+          const splitBlobs = await props.splitPDF(fileId, ranges);
+
+          splitBlobs.forEach((blob, index) => {
+            const filename =
+              pages.length === 1
+                ? `${file.name.replace('.pdf', '')}_page_${pages[index]}.pdf`
+                : `${file.name.replace('.pdf', '')}_pages_${pages.join('-')}.pdf`;
+            props.downloadBlob(blob, filename);
+          });
+        }
+      }
+    }
+  } catch (error) {}
 };
 
-const handleSplit = () => {
-  emit('split', selectedFileForSplit.value, pageRanges.value);
+const handleRemoveSelected = async () => {
+  if (props.selectedPages.size === 0) return;
+
+  try {
+    // Group selected pages by file
+    const pagesByFile = new Map<string, number[]>();
+
+    let globalIndex = 1;
+    for (const file of props.files) {
+      const filePages: number[] = [];
+      for (let page = 1; page <= file.pages; page++) {
+        if (props.selectedPages.has(globalIndex)) {
+          filePages.push(page);
+        }
+        globalIndex++;
+      }
+      if (filePages.length > 0) {
+        pagesByFile.set(file.id, filePages);
+      }
+    }
+
+    // Remove pages from each file
+    for (const [fileId, pagesToRemove] of pagesByFile) {
+      const file = props.files.find((f) => f.id === fileId);
+      if (file) {
+        const resultBlob = await props.removePages(fileId, pagesToRemove);
+        const filename = `${file.name.replace('.pdf', '')}_removed_pages.pdf`;
+        props.downloadBlob(resultBlob, filename);
+      }
+    }
+  } catch (error) {}
 };
 
-const handleRemovePages = () => {
-  emit('removePages', selectedFileForRemove.value, pagesToRemove.value);
+const selectAllPages = () => {
+  emit('selectAll');
 };
 
-const rotateSelected = (rotation: number) => {
-  emit('rotatePages', props.selectedPageNumbers, rotation);
-};
-
-const clearSelection = () => {
+const clearPageSelection = () => {
   emit('clearSelection');
 };
 </script>

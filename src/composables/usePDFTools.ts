@@ -5,7 +5,7 @@ export interface PDFFile {
   id: string;
   name: string;
   file: File;
-  doc?: any; // Using any to avoid TypeScript issues with pdf-lib
+  doc?: any;
   url: string;
   pages: number;
   size: number;
@@ -53,7 +53,7 @@ export function usePDFTools() {
     const url = URL.createObjectURL(file);
 
     return {
-      id: Math.random().toString(36).substr(2, 9),
+      id: Math.random().toString(36).substring(2, 9),
       name: file.name,
       file,
       doc,
@@ -64,25 +64,20 @@ export function usePDFTools() {
   };
 
   const addFiles = async (fileList: FileList | File[]) => {
-    console.log('addFiles called with:', fileList);
     isProcessing.value = true;
 
     try {
       const fileArray = Array.from(fileList);
       const pdfFiles = fileArray.filter((file) => file.type === 'application/pdf');
-      console.log('Filtered PDF files:', pdfFiles.length);
 
       for (const file of pdfFiles) {
-        console.log('Loading PDF file:', file.name);
         const pdfFile = await loadPDFFile(file);
         files.value.push(pdfFile);
-        console.log('Added PDF file:', pdfFile.name, 'Total files:', files.value.length);
       }
     } catch (error) {
-      console.error('Error loading PDF files:', error);
+      // console.error('Error loading PDF files:', error);
     } finally {
       isProcessing.value = false;
-      console.log('addFiles completed. Final files count:', files.value.length);
     }
   };
 

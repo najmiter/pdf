@@ -18,7 +18,7 @@
       <!-- Selection Indicator -->
       <div
         v-if="isSelected"
-        class="absolute top-2 right-2 bg-primary text-background text-xs p-1 rounded-full z-10 shadow-sm flex items-center justify-center">
+        class="absolute top-2 right-2 bg-green-500 text-background text-xs p-1 rounded-full z-10 shadow-sm flex items-center justify-center">
         <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
           <path
             fill-rule="evenodd"
@@ -40,7 +40,7 @@
           @error="hasError = true" />
 
         <!-- Loading State -->
-        <div v-if="isLoading" class="absolute inset-0 flex items-center justify-center bg-white/90 rounded">
+        <div v-if="isLoading" class="absolute inset-0 flex items-center justify-center bg-foreground/10 rounded">
           <div class="flex flex-col items-center space-y-2">
             <div class="animate-spin rounded-full h-6 w-6 border-2 border-primary border-t-transparent" />
             <span class="text-xs text-muted-foreground">Loading...</span>
@@ -48,7 +48,9 @@
         </div>
 
         <!-- Error State -->
-        <div v-else-if="hasError" class="absolute inset-0 flex items-center justify-center bg-red-50/90 rounded">
+        <div
+          v-else-if="hasError"
+          class="absolute inset-0 flex items-center justify-center bg-red-50/90 dark:bg-red-300/20 rounded">
           <div class="flex flex-col items-center space-y-2 text-red-600">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path

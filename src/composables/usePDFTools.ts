@@ -6,6 +6,7 @@ export interface PDFFile {
   name: string;
   file: File;
   doc?: any; // Using any to avoid TypeScript issues with pdf-lib
+  url: string;
   pages: number;
   size: number;
   thumbnail?: string;
@@ -49,12 +50,14 @@ export function usePDFTools() {
     const arrayBuffer = await file.arrayBuffer();
     const doc = await PDFDocument.load(arrayBuffer);
     const pages = doc.getPageCount();
+    const url = URL.createObjectURL(file);
 
     return {
       id: Math.random().toString(36).substr(2, 9),
       name: file.name,
       file,
       doc,
+      url,
       pages,
       size: file.size,
     };

@@ -58,13 +58,13 @@
             </div>
 
             <!-- Page Grid for this file -->
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+            <div class="flex flex-wrap gap-4">
               <PDFPagePreview
                 v-for="pageNum in file.pages"
                 :key="`${file.id}-${pageNum}`"
                 :pageNumber="pageNum"
                 :fileName="file.name"
-                :pdfDocument="file.doc"
+                :pdfUrl="file.url"
                 :isSelected="selectedPages.has(getGlobalPageIndex(file.id, pageNum))"
                 @select="togglePageSelection(file.id, pageNum)" />
             </div>

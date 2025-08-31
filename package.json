@@ -30,6 +30,7 @@
     "vue-pdf-embed": "^2.1.3"
   },
   "devDependencies": {
+    "@types/node": "^24.3.0",
     "@vitejs/plugin-vue": "^6.0.1",
     "@vue/tsconfig": "^0.7.0",
     "tw-animate-css": "^1.3.7",

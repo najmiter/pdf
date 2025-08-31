@@ -10,12 +10,6 @@
   },
   "dependencies": {
     "@iconify/vue": "^5.0.0",
-    "@radix-ui/react-accordion": "^1.2.12",
-    "@radix-ui/react-dialog": "^1.1.15",
-    "@radix-ui/react-progress": "^1.1.7",
-    "@radix-ui/react-select": "^2.2.6",
-    "@radix-ui/react-separator": "^1.1.7",
-    "@radix-ui/react-slot": "^1.2.3",
     "@tailwindcss/vite": "^4.1.12",
     "@vueuse/core": "^13.8.0",
     "class-variance-authority": "^0.7.1",

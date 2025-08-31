@@ -1,5 +1,17 @@
-# Vue 3 + TypeScript + Vite
+# PDF Tool
 
-This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+![Logo](public/icon.svg)
 
-Learn more about the recommended Project Setup and IDE Support in the [Vue Docs TypeScript Guide](https://vuejs.org/guide/typescript/overview.html#project-setup).
+A free online PDF editor that allows you to merge, split, and edit PDF files with an easy drag-and-drop interface.
+
+## Features
+
+- Merge multiple PDF files into one document
+- Split PDF files into separate pages or sections
+- Remove specific pages from PDF files
+- Compress PDF files to reduce file size
+- Rotate pages within PDF files
+- Add watermarks to PDF documents
+- Edit PDF metadata and properties
+
+Access the tool at [https://pdftools.knoctal.com/](https://pdftools.knoctal.com/)

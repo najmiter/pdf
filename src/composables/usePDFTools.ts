@@ -61,20 +61,25 @@ export function usePDFTools() {
   };
 
   const addFiles = async (fileList: FileList | File[]) => {
+    console.log('addFiles called with:', fileList);
     isProcessing.value = true;
 
     try {
       const fileArray = Array.from(fileList);
       const pdfFiles = fileArray.filter((file) => file.type === 'application/pdf');
+      console.log('Filtered PDF files:', pdfFiles.length);
 
       for (const file of pdfFiles) {
+        console.log('Loading PDF file:', file.name);
         const pdfFile = await loadPDFFile(file);
         files.value.push(pdfFile);
+        console.log('Added PDF file:', pdfFile.name, 'Total files:', files.value.length);
       }
     } catch (error) {
       console.error('Error loading PDF files:', error);
     } finally {
       isProcessing.value = false;
+      console.log('addFiles completed. Final files count:', files.value.length);
     }
   };
 

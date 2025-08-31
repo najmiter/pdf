@@ -56,6 +56,13 @@
             <Icon icon="lucide:download" class="mr-2 h-4 w-4" />
             Download Merged PDF
           </Button>
+
+          <!-- Debug info for merge -->
+          <div class="text-xs text-muted-foreground mt-2 p-2 bg-yellow-50 rounded">
+            Debug: selectedFiles={{ selectedFiles.length }}, isProcessing={{ isProcessing }}, disabled={{
+              selectedFiles.length < 2 || isProcessing
+            }}
+          </div>
         </div>
 
         <!-- Split Tool -->
@@ -86,6 +93,13 @@
             <Icon icon="lucide:scissors" class="mr-2 h-4 w-4" />
             Split PDF
           </Button>
+
+          <!-- Debug info for split -->
+          <div class="text-xs text-muted-foreground mt-2 p-2 bg-yellow-50 rounded">
+            Debug: selectedFile={{ !!selectedFileForSplit }}, pageRanges={{ !!pageRanges }}, isProcessing={{
+              isProcessing
+            }}, disabled={{ !selectedFileForSplit || !pageRanges || isProcessing }}
+          </div>
         </div>
 
         <!-- Remove Pages Tool -->
@@ -116,6 +130,13 @@
             <Icon icon="lucide:trash-2" class="mr-2 h-4 w-4" />
             Remove Pages
           </Button>
+
+          <!-- Debug info for remove -->
+          <div class="text-xs text-muted-foreground mt-2 p-2 bg-yellow-50 rounded">
+            Debug: selectedFile={{ !!selectedFileForRemove }}, pagesToRemove={{ !!pagesToRemove }}, isProcessing={{
+              isProcessing
+            }}, disabled={{ !selectedFileForRemove || !pagesToRemove || isProcessing }}
+          </div>
         </div>
 
         <!-- Rotate Tool -->

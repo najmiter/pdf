@@ -84,6 +84,56 @@
         <div v-else class="text-xs text-muted-foreground text-center py-2">Select pages to remove</div>
       </div>
 
+      <!-- Convert to Images Tool -->
+      <div class="p-4 border rounded-lg space-y-3">
+        <div class="flex items-center space-x-2">
+          <Icon icon="lucide:image" class="h-5 w-5 text-primary" />
+          <h3 class="font-medium">Convert to Images</h3>
+        </div>
+        <p class="text-sm text-muted-foreground">Convert selected pages to high-quality PNG/JPEG images</p>
+
+        <div v-if="selectedPages.size > 0" class="space-y-3">
+          <p class="text-xs text-muted-foreground">{{ selectedPages.size }} page(s) selected</p>
+
+          <!-- Format Selection -->
+          <div class="space-y-2">
+            <div class="text-xs font-medium text-muted-foreground">Output Format:</div>
+            <div class="space-y-1">
+              <label class="flex items-center space-x-2 text-xs">
+                <input v-model="imageFormat" type="radio" value="png" class="w-3 h-3" />
+                <span>PNG (lossless)</span>
+              </label>
+              <label class="flex items-center space-x-2 text-xs">
+                <input v-model="imageFormat" type="radio" value="jpeg" class="w-3 h-3" />
+                <span>JPEG (smaller file size)</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Quality Slider (for JPEG) -->
+          <div v-if="imageFormat === 'jpeg'" class="space-y-2">
+            <div class="text-xs font-medium text-muted-foreground">Quality: {{ imageQuality }}%</div>
+            <input
+              v-model="imageQuality"
+              type="range"
+              min="70"
+              max="100"
+              step="5"
+              class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700" />
+          </div>
+
+          <Button
+            @click="handleConvertToImages"
+            :disabled="selectedPages.size === 0 || isProcessing"
+            class="w-full"
+            size="sm">
+            <Icon icon="lucide:download" class="mr-2 h-4 w-4" />
+            Convert to {{ imageFormat.toUpperCase() }} & Download ZIP
+          </Button>
+        </div>
+        <div v-else class="text-xs text-muted-foreground text-center py-2">Select pages to convert</div>
+      </div>
+
       <!-- Selection Tools -->
       <div class="p-4 border rounded-lg space-y-3">
         <div class="flex items-center space-x-2">
@@ -130,6 +180,7 @@ interface Props {
   mergePDFs: (fileIds: string[]) => Promise<Blob>;
   splitPDF: (fileId: string, ranges: { start: number; end: number }[]) => Promise<Blob[]>;
   removePages: (fileId: string, pages: number[]) => Promise<Blob>;
+  convertToImages: (format?: 'png' | 'jpeg', quality?: number) => Promise<void>;
   downloadBlob: (blob: Blob, filename: string) => void;
 }
 
@@ -141,6 +192,8 @@ const emit = defineEmits<{
 }>();
 
 const splitMergeOption = ref<'merged' | 'separate'>('merged');
+const imageFormat = ref<'png' | 'jpeg'>('png');
+const imageQuality = ref(90);
 
 const handleMerge = async () => {
   try {
@@ -272,5 +325,16 @@ const selectAllPages = () => {
 
 const clearPageSelection = () => {
   emit('clearSelection');
+};
+
+const handleConvertToImages = async () => {
+  if (props.selectedPages.size === 0) return;
+
+  try {
+    const quality = imageFormat.value === 'jpeg' ? imageQuality.value / 100 : 1.0;
+    await props.convertToImages(imageFormat.value, quality);
+  } catch (error) {
+    console.error('Error converting to images:', error);
+  }
 };
 </script>

@@ -1,5 +1,7 @@
 import { ref, computed } from 'vue';
 import { PDFDocument, degrees } from 'pdf-lib';
+import * as pdfjsLib from 'pdfjs-dist';
+import JSZip from 'jszip';
 
 export interface PDFFile {
   id: string;
@@ -164,6 +166,69 @@ export function usePDFTools() {
     URL.revokeObjectURL(url);
   };
 
+  const convertToImages = async (format: 'png' | 'jpeg' = 'png', quality: number = 1.0): Promise<void> => {
+    if (selectedPages.value.size === 0) return;
+
+    isProcessing.value = true;
+    currentTool.value = 'convert';
+
+    try {
+      const zip = new JSZip();
+      const imagesFolder = zip.folder('pdf_images');
+
+      let globalIndex = 1;
+      let imageCount = 0;
+
+      for (const file of files.value) {
+        const pdf = await pdfjsLib.getDocument(file.url).promise;
+
+        for (let pageNum = 1; pageNum <= file.pages; pageNum++) {
+          if (selectedPages.value.has(globalIndex)) {
+            const page = await pdf.getPage(pageNum);
+            const viewport = page.getViewport({ scale: 3.0 }); // High quality scale
+
+            // Create canvas
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d')!;
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+
+            // Render page to canvas
+            const renderContext = {
+              canvasContext: context,
+              viewport: viewport,
+              canvas: canvas,
+            };
+
+            await page.render(renderContext).promise;
+
+            // Convert to blob
+            const blob = await new Promise<Blob>((resolve) => {
+              canvas.toBlob((blob) => resolve(blob!), format === 'png' ? 'image/png' : 'image/jpeg', quality);
+            });
+
+            // Add to zip
+            const filename = `${file.name.replace('.pdf', '')}_page_${pageNum}.${format}`;
+            imagesFolder!.file(filename, blob);
+
+            imageCount++;
+          }
+          globalIndex++;
+        }
+      }
+
+      // Generate zip file
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      const zipFilename = `pdf_images_${imageCount}_pages.zip`;
+      downloadBlob(zipBlob, zipFilename);
+    } catch (error) {
+      console.error('Error converting to images:', error);
+    } finally {
+      isProcessing.value = false;
+      currentTool.value = null;
+    }
+  };
+
   return {
     files,
     selectedPages,
@@ -177,6 +242,7 @@ export function usePDFTools() {
     splitPDF,
     removePages,
     rotatePage,
+    convertToImages,
     downloadBlob,
   };
 }

@@ -99,7 +99,8 @@
         :convertToImages="convertToImages"
         :downloadBlob="downloadBlob"
         @selectAll="selectAllPages"
-        @clearSelection="clearPageSelection" />
+        @clearSelection="clearPageSelection"
+        @progress="handleProgress" />
     </div>
 
     <!-- Hidden file input for adding more files -->
@@ -111,6 +112,15 @@
       class="hidden"
       @change="handleFileInput" />
   </div>
+
+  <!-- Loading Overlay -->
+  <LoadingOverlay
+    :isVisible="isProcessing"
+    :title="getLoadingTitle()"
+    :message="getLoadingMessage()"
+    :progress="processingProgress"
+    :currentStep="processingStep"
+    :cancellable="false" />
 </template>
 
 <script setup lang="ts">
@@ -121,12 +131,16 @@ import { useDarkMode } from '@/composables/useDarkMode';
 import DropZone from '@/components/DropZone.vue';
 import LazyPDFPageGrid from '@/components/LazyPDFPageGrid.vue';
 import ToolsPanel from '@/components/ToolsPanel.vue';
+import LoadingOverlay from '@/components/LoadingOverlay.vue';
 import Button from '@/components/ui/Button.vue';
 
 const {
   files,
   selectedPages,
   isProcessing,
+  currentTool,
+  processingProgress,
+  processingStep,
   totalPages,
   addFiles,
   removeFile,
@@ -208,6 +222,11 @@ const clearPageSelection = () => {
   selectedPages.value.clear();
 };
 
+const handleProgress = (progress: number, step: string) => {
+  processingProgress.value = progress;
+  processingStep.value = step;
+};
+
 const selectAllPages = () => {
   selectedPages.value.clear();
   let globalIndex = 1;
@@ -217,6 +236,36 @@ const selectAllPages = () => {
       selectedPages.value.add(globalIndex);
       globalIndex++;
     }
+  }
+};
+
+const getLoadingTitle = () => {
+  switch (currentTool.value) {
+    case 'convert':
+      return 'Converting to Images';
+    case 'merge':
+      return 'Merging PDFs';
+    case 'split':
+      return 'Splitting PDF';
+    case 'remove':
+      return 'Removing Pages';
+    default:
+      return 'Processing...';
+  }
+};
+
+const getLoadingMessage = () => {
+  switch (currentTool.value) {
+    case 'convert':
+      return 'Converting selected pages to high-quality images';
+    case 'merge':
+      return 'Combining all PDF files into one document';
+    case 'split':
+      return 'Extracting selected pages into separate files';
+    case 'remove':
+      return 'Removing selected pages from the document';
+    default:
+      return 'Please wait while we process your files';
   }
 };
 </script>

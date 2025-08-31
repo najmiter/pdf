@@ -180,7 +180,11 @@ interface Props {
   mergePDFs: (fileIds: string[]) => Promise<Blob>;
   splitPDF: (fileId: string, ranges: { start: number; end: number }[]) => Promise<Blob[]>;
   removePages: (fileId: string, pages: number[]) => Promise<Blob>;
-  convertToImages: (format?: 'png' | 'jpeg', quality?: number) => Promise<void>;
+  convertToImages: (
+    format?: 'png' | 'jpeg',
+    quality?: number,
+    onProgress?: (progress: number, step: string) => void
+  ) => Promise<void>;
   downloadBlob: (blob: Blob, filename: string) => void;
 }
 
@@ -189,6 +193,7 @@ const props = defineProps<Props>();
 const emit = defineEmits<{
   selectAll: [];
   clearSelection: [];
+  progress: [progress: number, step: string];
 }>();
 
 const splitMergeOption = ref<'merged' | 'separate'>('merged');
@@ -332,7 +337,9 @@ const handleConvertToImages = async () => {
 
   try {
     const quality = imageFormat.value === 'jpeg' ? imageQuality.value / 100 : 1.0;
-    await props.convertToImages(imageFormat.value, quality);
+    await props.convertToImages(imageFormat.value, quality, (progress, step) => {
+      emit('progress', progress, step);
+    });
   } catch (error) {
     console.error('Error converting to images:', error);
   }

@@ -104,6 +104,7 @@
         :mergePDFs="mergePDFs"
         :splitPDF="splitPDF"
         :removePages="removePages"
+        :insertPDF="insertPDF"
         :convertToImages="convertToImages"
         :downloadBlob="downloadBlob"
         @progress="handleProgress" />
@@ -153,6 +154,7 @@ const {
   mergePDFs,
   splitPDF,
   removePages,
+  insertPDF,
   convertToImages,
   downloadBlob,
 } = usePDFTools();

@@ -52,6 +52,16 @@
             </div>
           </div>
         </Button>
+
+        <Button @click="selectedTool = 'insert'" variant="soft" class="w-full justify-start p-3 h-auto">
+          <div class="flex items-center space-x-3">
+            <Icon icon="lucide:plus" class="h-5 w-5 text-primary" />
+            <div class="text-left">
+              <div class="font-medium">Insert PDF</div>
+              <div class="text-xs text-muted-foreground">Insert one PDF into another</div>
+            </div>
+          </div>
+        </Button>
       </div>
 
       <!-- Tool Controls (when tool selected) -->
@@ -189,6 +199,83 @@
           </div>
           <div v-else class="text-xs text-muted-foreground text-center py-2">Select pages to convert</div>
         </div>
+
+        <!-- Insert PDF Tool -->
+        <div v-if="selectedTool === 'insert'" class="p-4 border rounded-lg space-y-3">
+          <div class="flex items-center space-x-2">
+            <Icon icon="lucide:plus" class="h-5 w-5 text-primary" />
+            <h3 class="font-medium">Insert PDF</h3>
+          </div>
+          <p class="text-sm text-muted-foreground">Insert one PDF into another at a specific point</p>
+
+          <div v-if="files.length >= 2" class="space-y-3">
+            <!-- Select Original PDF -->
+            <div class="space-y-2">
+              <div class="text-xs font-medium text-muted-foreground">Original PDF:</div>
+              <select v-model="insertOriginalFileId" class="w-full p-2 border rounded text-sm">
+                <option value="">Select original PDF</option>
+                <option v-for="file in files" :key="file.id" :value="file.id">
+                  {{ file.name }} ({{ file.pages }} pages)
+                </option>
+              </select>
+            </div>
+
+            <!-- Select Insert PDF -->
+            <div class="space-y-2">
+              <div class="text-xs font-medium text-muted-foreground">PDF to Insert:</div>
+              <select v-model="insertFileId" class="w-full p-2 border rounded text-sm">
+                <option value="">Select PDF to insert</option>
+                <option
+                  v-for="file in files"
+                  :key="file.id"
+                  :value="file.id"
+                  :disabled="file.id === insertOriginalFileId">
+                  {{ file.name }} ({{ file.pages }} pages)
+                </option>
+              </select>
+            </div>
+
+            <!-- Insertion Point -->
+            <div class="space-y-2">
+              <div class="text-xs font-medium text-muted-foreground">Insert at page:</div>
+              <input
+                v-model.number="insertAtPage"
+                type="number"
+                min="1"
+                :max="(originalFile?.pages ?? 0) + 1"
+                class="w-full p-2 border rounded text-sm"
+                placeholder="e.g., 5" />
+              <div class="text-xs text-muted-foreground">
+                Insert before this page number (1 to {{ (originalFile?.pages ?? 0) + 1 }})
+              </div>
+            </div>
+
+            <!-- Page Ranges (optional) -->
+            <div class="space-y-2">
+              <div class="text-xs font-medium text-muted-foreground">Pages to insert (optional):</div>
+              <input
+                v-model="insertRanges"
+                type="text"
+                class="w-full p-2 border rounded text-sm"
+                placeholder="e.g., 1-3,5,7-9" />
+              <div class="text-xs text-muted-foreground">
+                Leave empty to insert all pages. Use ranges like 1-3 or single pages like 5.
+              </div>
+            </div>
+
+            <Button
+              @click="handleInsertPDF"
+              :disabled="!insertOriginalFileId || !insertFileId || !insertAtPage || isProcessing"
+              class="w-full"
+              size="sm">
+              <Icon icon="lucide:plus" class="mr-2 h-4 w-4" />
+              Insert PDF & Download
+            </Button>
+          </div>
+          <div v-else class="text-xs text-muted-foreground text-center py-2">
+            Upload at least 2 PDFs to use this tool
+          </div>
+        </div>
       </div>
     </div>
 
@@ -203,7 +290,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { Icon } from '@iconify/vue';
 import Button from '@/components/ui/Button.vue';
 import type { PDFFile } from '@/composables/usePDFTools';
@@ -215,6 +302,12 @@ interface Props {
   mergePDFs: (fileIds: string[]) => Promise<Blob>;
   splitPDF: (fileId: string, ranges: { start: number; end: number }[]) => Promise<Blob[]>;
   removePages: (fileId: string, pages: number[]) => Promise<Blob>;
+  insertPDF: (
+    originalFileId: string,
+    insertFileId: string,
+    insertAtPage: number,
+    ranges?: { start: number; end: number }[]
+  ) => Promise<Blob>;
   convertToImages: (
     format?: 'png' | 'jpeg',
     quality?: number,
@@ -233,6 +326,32 @@ const splitMergeOption = ref<'merged' | 'separate'>('merged');
 const imageFormat = ref<'png' | 'jpeg'>('png');
 const imageQuality = ref(90);
 const selectedTool = ref<string | null>(null);
+
+const insertOriginalFileId = ref<string>('');
+const insertFileId = ref<string>('');
+const insertAtPage = ref<number>(1);
+const insertRanges = ref<string>('');
+
+const originalFile = computed(() => props.files.find((f) => f.id === insertOriginalFileId.value) || null);
+
+const parsePageRange = (range: string): { start: number; end: number }[] => {
+  const ranges: { start: number; end: number }[] = [];
+  const parts = range.split(',').map((p) => p.trim());
+  for (const part of parts) {
+    if (part.includes('-')) {
+      const [start, end] = part.split('-').map((n) => parseInt(n.trim()));
+      if (!isNaN(start) && !isNaN(end) && start <= end) {
+        ranges.push({ start, end });
+      }
+    } else {
+      const page = parseInt(part);
+      if (!isNaN(page)) {
+        ranges.push({ start: page, end: page });
+      }
+    }
+  }
+  return ranges;
+};
 
 const handleMerge = async () => {
   try {
@@ -368,6 +487,32 @@ const handleConvertToImages = async () => {
     });
   } catch (error) {
     console.error('Error converting to images:', error);
+  }
+};
+
+const handleInsertPDF = async () => {
+  if (!insertOriginalFileId.value || !insertFileId.value || !insertAtPage.value) return;
+
+  try {
+    let ranges: { start: number; end: number }[] | undefined;
+    if (insertRanges.value.trim()) {
+      ranges = parsePageRange(insertRanges.value);
+    }
+
+    const resultBlob = await props.insertPDF(
+      insertOriginalFileId.value,
+      insertFileId.value,
+      insertAtPage.value,
+      ranges
+    );
+
+    const originalFile = props.files.find((f) => f.id === insertOriginalFileId.value);
+    const insertFile = props.files.find((f) => f.id === insertFileId.value);
+    const filename = `${originalFile?.name.replace('.pdf', '')}_inserted_${insertFile?.name.replace('.pdf', '')}.pdf`;
+
+    props.downloadBlob(resultBlob, filename);
+  } catch (error) {
+    console.error('Error inserting PDF:', error);
   }
 };
 </script>

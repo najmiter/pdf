@@ -4,7 +4,7 @@
     <header class="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div class="container mx-auto px-4 py-4">
         <div class="flex items-center justify-between">
-          <div class="flex items-center space-x-2">
+          <div class="flex items-center space-x-2 cursor-default select-none">
             <Icon icon="lucide:file-text" class="h-6 w-6 text-primary" />
             <h1 class="text-xl font-bold">PDF Tool</h1>
           </div>
@@ -20,7 +20,9 @@
                 <span class="sr-only">Toggle theme</span>
               </Button>
               <a href="https://github.com/najmiter/pdf" target="_blank">
-                <Button variant="soft" size="icon" class="w-9 h-9">
+                <Button variant="soft" size="sm" class="h-9">
+                  <span v-if="repoStarsCount" class="sr-only">Stars</span>
+                  <span v-if="repoStarsCount" class="text-xs">{{ repoStarsCount }}</span>
                   <Icon icon="lucide:github" class="h-4 w-4" />
                   <span class="sr-only">Github</span>
                 </Button>
@@ -148,7 +150,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import { Icon } from '@iconify/vue';
 import { usePDFTools } from '@/composables/usePDFTools';
 import { useDarkMode } from '@/composables/useDarkMode';
@@ -182,6 +184,15 @@ const { isDark, toggleDarkMode } = useDarkMode();
 const fileInputRef = ref<HTMLInputElement>();
 const isDragging = ref(false);
 const dragCounter = ref(0);
+const repoStarsCount = ref<string | null>(null);
+
+onMounted(async () => {
+  try {
+    const response = await fetch('https://api.github.com/repos/najmiter/pdf');
+    const data = await response.json();
+    repoStarsCount.value = Intl.NumberFormat('en-us', { notation: 'compact' }).format(data.stargazers_count);
+  } catch {}
+});
 
 watch(
   files,

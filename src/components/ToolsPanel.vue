@@ -13,7 +13,12 @@
       <div v-if="!selectedTool" class="space-y-2">
         <h3 class="text-sm font-medium text-muted-foreground mb-3">Available Tools</h3>
 
-        <Button @click="selectedTool = 'merge'" variant="soft" class="w-full justify-start p-3 h-auto">
+        <Button
+          type="button"
+          aria-label="Merge PDFs"
+          @click="selectedTool = 'merge'"
+          variant="soft"
+          class="w-full justify-start p-3 h-auto">
           <div class="flex items-center space-x-3">
             <Icon icon="lucide:file-plus" class="h-5 w-5 text-primary" />
             <div class="text-left">
@@ -23,7 +28,12 @@
           </div>
         </Button>
 
-        <Button @click="selectedTool = 'split'" variant="soft" class="w-full justify-start p-3 h-auto">
+        <Button
+          type="button"
+          aria-label="Split PDF"
+          @click="selectedTool = 'split'"
+          variant="soft"
+          class="w-full justify-start p-3 h-auto">
           <div class="flex items-center space-x-3">
             <Icon icon="lucide:scissors" class="h-5 w-5 text-primary" />
             <div class="text-left">
@@ -33,7 +43,12 @@
           </div>
         </Button>
 
-        <Button @click="selectedTool = 'remove'" variant="soft" class="w-full justify-start p-3 h-auto">
+        <Button
+          type="button"
+          aria-label="Remove Pages"
+          @click="selectedTool = 'remove'"
+          variant="soft"
+          class="w-full justify-start p-3 h-auto">
           <div class="flex items-center space-x-3">
             <Icon icon="lucide:trash-2" class="h-5 w-5 text-primary" />
             <div class="text-left">
@@ -43,7 +58,12 @@
           </div>
         </Button>
 
-        <Button @click="selectedTool = 'convert'" variant="soft" class="w-full justify-start p-3 h-auto">
+        <Button
+          type="button"
+          aria-label="Convert to Images"
+          @click="selectedTool = 'convert'"
+          variant="soft"
+          class="w-full justify-start p-3 h-auto">
           <div class="flex items-center space-x-3">
             <Icon icon="lucide:image" class="h-5 w-5 text-primary" />
             <div class="text-left">
@@ -53,7 +73,12 @@
           </div>
         </Button>
 
-        <Button @click="selectedTool = 'insert'" variant="soft" class="w-full justify-start p-3 h-auto">
+        <Button
+          type="button"
+          aria-label="Insert PDF"
+          @click="selectedTool = 'insert'"
+          variant="soft"
+          class="w-full justify-start p-3 h-auto">
           <div class="flex items-center space-x-3">
             <Icon icon="lucide:plus" class="h-5 w-5 text-primary" />
             <div class="text-left">
@@ -67,7 +92,7 @@
       <!-- Tool Controls (when tool selected) -->
       <div v-else class="space-y-4">
         <div class="flex items-center justify-between">
-          <Button @click="selectedTool = null" variant="soft" size="sm">
+          <Button type="button" aria-label="back to tools" @click="selectedTool = null" variant="soft" size="sm">
             <Icon icon="lucide:arrow-left" class="mr-2 h-4 w-4" />
             Back to Tools
           </Button>
@@ -80,7 +105,13 @@
             <h3 class="font-medium">Merge PDFs</h3>
           </div>
           <p class="text-sm text-muted-foreground">Combine multiple PDF files into one</p>
-          <Button @click="handleMerge" :disabled="files.length < 2 || isProcessing" class="w-full" size="sm">
+          <Button
+            type="button"
+            aria-label="merge all files"
+            @click="handleMerge"
+            :disabled="files.length < 2 || isProcessing"
+            class="w-full"
+            size="sm">
             <Icon icon="lucide:download" class="mr-2 h-4 w-4" />
             Merge All Files
           </Button>
@@ -113,6 +144,8 @@
             </div>
 
             <Button
+              type="button"
+              aria-label="Split selected pages"
               @click="handleSplitSelected"
               :disabled="selectedPages.size === 0 || isProcessing"
               class="w-full"
@@ -142,6 +175,7 @@
               class="w-full"
               size="sm"
               type="button"
+              aria-label="Remove selected pages"
               variant="destructive">
               <Icon icon="lucide:trash-2" class="mr-2 h-4 w-4" />
               Remove Selected Pages
@@ -192,6 +226,8 @@
               @click="handleConvertToImages"
               :disabled="selectedPages.size === 0 || isProcessing"
               class="w-full"
+              type="button"
+              aria-label="Convert to Images"
               size="sm">
               <Icon icon="lucide:download" class="mr-2 h-4 w-4" />
               Convert to {{ imageFormat.toUpperCase() }} & Download ZIP
@@ -264,6 +300,8 @@
             </div>
 
             <Button
+              type="button"
+              aria-label="Insert PDF & download"
               @click="handleInsertPDF"
               :disabled="!insertOriginalFileId || !insertFileId || !insertAtPage || isProcessing"
               class="w-full"

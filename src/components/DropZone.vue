@@ -12,13 +12,13 @@
     @dragleave.prevent="handleDragLeave"
     @drop.prevent="handleDrop">
     <div class="flex flex-col items-center justify-center space-y-4 text-center">
-      <div :class="cn('rounded-full p-6', { 'bg-primary/10': isDragOver, 'bg-muted': !isDragOver })">
+      <div :class="cn('rounded-full p-6', { 'bg-primary/10': isDragOver, 'bg-primary/15': !isDragOver })">
         <Icon
           icon="lucide:file-text"
-          :class="cn('h-12 w-12', { 'text-primary': isDragOver, 'text-muted-foreground': !isDragOver })" />
+          :class="cn('h-12 w-12', { 'text-primary': isDragOver, 'text-primary/50': !isDragOver })" />
       </div>
 
-      <div class="space-y-2">
+      <div class="space-y-2 select-none">
         <h3 :class="cn('text-xl font-semibold', { 'text-primary': isDragOver, 'text-foreground': !isDragOver })">
           {{ isDragOver ? 'Drop your PDF files here' : 'Upload PDF Files' }}
         </h3>
@@ -28,6 +28,8 @@
       </div>
 
       <Button
+        type="button"
+        aria-label="Upload PDF Files"
         variant="default"
         @click="triggerFileInput"
         :disabled="isProcessing"

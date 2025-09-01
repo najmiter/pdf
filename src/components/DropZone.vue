@@ -19,10 +19,10 @@
       </div>
 
       <div class="space-y-2 select-none">
-        <h3 :class="cn('text-xl font-semibold', { 'text-primary': isDragOver, 'text-foreground': !isDragOver })">
+        <h3 :class="cn('text-lg font-semibold', { 'text-primary': isDragOver, 'text-foreground': !isDragOver })">
           {{ isDragOver ? 'Drop your PDF files here' : 'Upload PDF Files' }}
         </h3>
-        <p class="text-muted-foreground max-w-md">
+        <p class="text-muted-foreground text-sm max-w-md">
           {{ isDragOver ? 'Release to upload' : 'Drag and drop your PDF files here, or click to browse' }}
         </p>
       </div>
@@ -34,7 +34,7 @@
         @click="triggerFileInput"
         :disabled="isProcessing"
         class="bg-gradient-to-r text-white from-primary to-secondary transition-opacity hover:opacity-90">
-        <Icon icon="lucide:folder-open" class="mr-2 h-4 w-4" />
+        <Icon icon="lucide:folder-open" class="mr-1 h-4 w-4" />
         Browse Files
       </Button>
 

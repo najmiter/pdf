@@ -1,12 +1,12 @@
 <template>
-  <div class="min-h-screen bg-background">
+  <div class="min-h-svh bg-background">
     <!-- Header -->
-    <header class="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header class="border-b bg-background/90 backdrop-blur-2xl supports-[backdrop-filter]:bg-background/60">
       <div class="container mx-auto px-4 py-4">
         <div class="flex items-center justify-between">
           <div class="flex items-center space-x-2 cursor-default select-none">
-            <Icon icon="lucide:file-text" class="h-6 w-6 text-primary" />
-            <h1 class="text-xl font-bold">PDF Tool</h1>
+            <img src="/icon.svg" width="24" height="24" alt="pdf tools logo" />
+            <h1 class="text-xl font-bold">PDF Tools</h1>
           </div>
           <div class="flex items-center space-x-4">
             <div v-if="files.length > 0" class="text-sm text-muted-foreground">

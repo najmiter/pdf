@@ -51,22 +51,31 @@
         <div v-else class="space-y-6">
           <!-- File Management -->
           <div class="flex items-center justify-between">
-            <h2 class="text-lg font-semibold">PDF Pages</h2>
-            <div class="flex items-center space-x-2">
-              <Button variant="soft" @click="addMoreFiles">
-                <Icon icon="lucide:plus" class="mr-2 h-4 w-4" />
+            <div class="flex items-center flex-wrap gap-2">
+              <Button variant="soft" type="button" aria-label="add more files" @click="addMoreFiles">
+                <Icon icon="lucide:plus" class="h-4 w-4" />
                 Add More Files
               </Button>
-              <Button variant="soft" @click="clearAllFiles">
-                <Icon icon="lucide:trash-2" class="mr-2 h-4 w-4" />
+              <Button variant="soft" type="button" aria-label="clear all files" @click="clearAllFiles">
+                <Icon icon="lucide:trash-2" class="h-4 w-4" />
                 Clear All
               </Button>
-              <Button variant="soft" @click="selectAllPages" :disabled="files.length === 0">
-                <Icon icon="lucide:mouse-pointer-click" class="mr-2 h-4 w-4" />
+              <Button
+                variant="soft"
+                type="button"
+                aria-label="select all pages"
+                @click="selectAllPages"
+                :disabled="files.length === 0">
+                <Icon icon="lucide:mouse-pointer-click" class="h-4 w-4" />
                 Select All Pages
               </Button>
-              <Button variant="soft" @click="clearPageSelection" :disabled="selectedPages.size === 0">
-                <Icon icon="lucide:x" class="mr-2 h-4 w-4" />
+              <Button
+                variant="soft"
+                type="button"
+                aria-label="clear page selection"
+                @click="clearPageSelection"
+                :disabled="selectedPages.size === 0">
+                <Icon icon="lucide:x" class="h-4 w-4" />
                 Clear Selection
               </Button>
             </div>

@@ -3,20 +3,23 @@
     :class="
       cn(
         'rounded-lg transition-colors duration-200 p-8',
-        isDragOver ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50',
+        { 'border-primary bg-primary/5': isDragOver, 'border-border hover:border-primary/50': !isDragOver },
         props.class
       )
     "
     @dragover.prevent="handleDragOver"
+    @dragenter.prevent="handleDragEnter"
     @dragleave.prevent="handleDragLeave"
     @drop.prevent="handleDrop">
     <div class="flex flex-col items-center justify-center space-y-4 text-center">
-      <div :class="cn('rounded-full p-6', isDragOver ? 'bg-primary/10' : 'bg-muted')">
-        <Icon icon="lucide:file-text" :class="cn('h-12 w-12', isDragOver ? 'text-primary' : 'text-muted-foreground')" />
+      <div :class="cn('rounded-full p-6', { 'bg-primary/10': isDragOver, 'bg-muted': !isDragOver })">
+        <Icon
+          icon="lucide:file-text"
+          :class="cn('h-12 w-12', { 'text-primary': isDragOver, 'text-muted-foreground': !isDragOver })" />
       </div>
 
       <div class="space-y-2">
-        <h3 :class="cn('text-xl font-semibold', isDragOver ? 'text-primary' : 'text-foreground')">
+        <h3 :class="cn('text-xl font-semibold', { 'text-primary': isDragOver, 'text-foreground': !isDragOver })">
           {{ isDragOver ? 'Drop your PDF files here' : 'Upload PDF Files' }}
         </h3>
         <p class="text-muted-foreground max-w-md">
@@ -66,18 +69,27 @@ const emit = defineEmits<{
 const isDragOver = ref(false);
 const fileInputRef = ref<HTMLInputElement>();
 
+const handleDragEnter = (e: DragEvent) => {
+  e.preventDefault();
+  e.stopPropagation();
+  isDragOver.value = true;
+};
+
 const handleDragOver = (e: DragEvent) => {
   e.preventDefault();
+  e.stopPropagation();
   isDragOver.value = true;
 };
 
 const handleDragLeave = (e: DragEvent) => {
   e.preventDefault();
+  e.stopPropagation();
   isDragOver.value = false;
 };
 
 const handleDrop = (e: DragEvent) => {
   e.preventDefault();
+  e.stopPropagation();
   isDragOver.value = false;
 
   if (e.dataTransfer?.files) {

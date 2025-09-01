@@ -45,8 +45,6 @@ const props = withDefaults(defineProps<Props>(), {
   cancellable: false,
 });
 
-console.log('LoadingOverlay props:', props);
-
 defineEmits<{
   cancel: [];
 }>();

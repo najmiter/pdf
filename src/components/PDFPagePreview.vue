@@ -1,9 +1,11 @@
 <template>
   <Card
+    role="button"
+    :aria-label="`Page ${pageNumber}`"
     :class="
       cn(
-        'relative cursor-pointer bg-transparent transition-all duration-200 min-w-60 group overflow-hidden hover:bg-foreground/5',
-        { 'bg-foreground/5': isSelected },
+        'relative cursor-pointer max-w-60 bg-transparent transition-all duration-200 min-w-60 group overflow-hidden hover:bg-foreground/5',
+        { 'bg-foreground/10': isSelected },
         props.class
       )
     "
@@ -34,7 +36,7 @@
           :page="pageNumber"
           :scale="1.1"
           :width="220"
-          class="rounded-lg max-w-60 overflow-hidden grid place-content-center w-fit shadow-sm"
+          class="rounded-lg max-w-60 max-h-74 overflow-hidden grid place-content-center w-fit shadow-sm"
           @rendering="isLoading = true"
           @rendered="isLoading = false"
           @error="hasError = true" />
@@ -100,7 +102,6 @@ defineEmits<{ select: [] }>();
 const isLoading = ref(true);
 const hasError = ref(false);
 
-// Watch for changes in pdfUrl or pageNumber
 watch(
   () => [props.pdfUrl, props.pageNumber],
   () => {

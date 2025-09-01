@@ -33,7 +33,12 @@
 
     <div class="flex h-[calc(100vh-73px)]">
       <!-- Main Content Area -->
-      <main class="flex-1 p-6 overflow-auto">
+      <main
+        class="flex-1 p-6 overflow-auto"
+        @dragover.prevent="handleDragOver"
+        @dragenter.prevent="handleDragEnter"
+        @dragleave.prevent="handleDragLeave"
+        @drop.prevent="handleDrop">
         <!-- Drop Zone (shown when no files) -->
         <div v-if="files.length === 0" class="h-full flex items-center justify-center">
           <DropZone
@@ -128,6 +133,9 @@
     :progress="processingProgress"
     :currentStep="processingStep"
     :cancellable="false" />
+
+  <!-- Dragging overlay -->
+  <DraggingOverlay :isVisible="isDragging" />
 </template>
 
 <script setup lang="ts">
@@ -140,6 +148,7 @@ import LazyPDFPageGrid from '@/components/LazyPDFPageGrid.vue';
 import ToolsPanel from '@/components/ToolsPanel.vue';
 import LoadingOverlay from '@/components/LoadingOverlay.vue';
 import Button from '@/components/ui/Button.vue';
+import DraggingOverlay from './components/DraggingOverlay.vue';
 
 const {
   files,
@@ -162,6 +171,8 @@ const {
 const { isDark, toggleDarkMode } = useDarkMode();
 
 const fileInputRef = ref<HTMLInputElement>();
+const isDragging = ref(false);
+const dragCounter = ref(0);
 
 watch(
   files,
@@ -172,8 +183,42 @@ watch(
   { deep: true }
 );
 
-const handleFilesSelected = async (fileList: FileList) => {
+const handleFilesSelected = async (fileList: FileList | File[]) => {
   await addFiles(fileList);
+};
+
+const handleDragEnter = (event: DragEvent) => {
+  event.preventDefault();
+  dragCounter.value++;
+  if (dragCounter.value === 1) {
+    isDragging.value = true;
+  }
+};
+
+const handleDragOver = (event: DragEvent) => {
+  event.preventDefault();
+};
+
+const handleDragLeave = (event: DragEvent) => {
+  event.preventDefault();
+  // mouse is still within the element
+  if (event.relatedTarget && (event.currentTarget as HTMLElement).contains(event.relatedTarget as Node)) {
+    return;
+  }
+  dragCounter.value = Math.max(0, dragCounter.value - 1);
+  if (dragCounter.value === 0) {
+    isDragging.value = false;
+  }
+};
+
+const handleDrop = async (event: DragEvent) => {
+  isDragging.value = false;
+  dragCounter.value = 0;
+  const droppedFiles = Array.from(event.dataTransfer?.files || []);
+  const pdfFiles = droppedFiles.filter((file) => file.type === 'application/pdf');
+  if (pdfFiles.length > 0) {
+    await addFiles(pdfFiles);
+  }
 };
 
 const addMoreFiles = () => {

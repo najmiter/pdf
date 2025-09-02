@@ -15,18 +15,22 @@
               }}
             </div>
             <div class="flex gap-2 items-center">
-              <Button variant="soft" size="icon" @click="toggleDarkMode" class="w-9 h-9">
-                <Icon :icon="isDark ? 'lucide:sun' : 'lucide:moon'" class="h-4 w-4" />
-                <span class="sr-only">Toggle theme</span>
-              </Button>
-              <a href="https://github.com/najmiter/pdf" target="_blank">
+              <a
+                v-if="repoStarsCount"
+                title="Star this project on GitHub"
+                href="https://github.com/najmiter/pdf"
+                target="_blank">
                 <Button variant="soft" size="sm" class="h-9">
-                  <span v-if="repoStarsCount" class="sr-only">Stars</span>
-                  <span v-if="repoStarsCount" class="text-xs">{{ repoStarsCount }}</span>
+                  <span class="sr-only">Stars</span>
+                  <span class="text-xs">{{ repoStarsCount }}</span>
                   <Icon icon="lucide:github" class="h-4 w-4" />
                   <span class="sr-only">Github</span>
                 </Button>
               </a>
+              <Button variant="soft" size="icon" @click="toggleDarkMode" class="w-9 h-9">
+                <Icon :icon="isDark ? 'lucide:sun' : 'lucide:moon'" class="h-4 w-4" />
+                <span class="sr-only">Toggle theme</span>
+              </Button>
             </div>
           </div>
         </div>

@@ -33,7 +33,7 @@
         variant="default"
         @click="triggerFileInput"
         :disabled="isProcessing"
-        class="bg-gradient-to-r text-white from-primary to-secondary transition-opacity hover:opacity-90">
+        class="bg-primary text-black transition-colors hover:bg-primary/90">
         <Icon icon="lucide:folder-open" class="mr-1 h-4 w-4" />
         Browse Files
       </Button>

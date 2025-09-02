@@ -419,9 +419,7 @@ const handleSplitSelected = async () => {
       }
     }
 
-    // If user wants merged output and has multiple pages selected
     if (splitMergeOption.value === 'merged' && props.selectedPages.size > 1) {
-      // Create individual page blobs first
       const allPageBlobs: Blob[] = [];
       const selectedPageInfo: string[] = [];
 
@@ -438,9 +436,7 @@ const handleSplitSelected = async () => {
         }
       }
 
-      // Merge all the extracted pages into one PDF
       if (allPageBlobs.length > 0) {
-        // Create a temporary merged PDF by loading each blob and merging
         const { PDFDocument } = await import('pdf-lib');
         const mergedPdf = await PDFDocument.create();
 
@@ -462,7 +458,6 @@ const handleSplitSelected = async () => {
         props.downloadBlob(mergedBlob, filename);
       }
     } else {
-      // Create separate files for each page (original behavior)
       for (const [fileId, pages] of pagesByFile) {
         const file = props.files.find((f) => f.id === fileId);
         if (file) {
@@ -486,7 +481,6 @@ const handleRemoveSelected = async () => {
   if (props.selectedPages.size === 0) return;
 
   try {
-    // Group selected pages by file
     const pagesByFile = new Map<string, number[]>();
 
     let globalIndex = 1;
@@ -503,7 +497,6 @@ const handleRemoveSelected = async () => {
       }
     }
 
-    // Remove pages from each file
     for (const [fileId, pagesToRemove] of pagesByFile) {
       const file = props.files.find((f) => f.id === fileId);
       if (file) {

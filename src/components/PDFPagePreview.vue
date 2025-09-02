@@ -30,7 +30,7 @@
       </div>
 
       <!-- PDF Page Preview -->
-      <div class="w-full h-full flex items-center justify-center p-2">
+      <div class="w-full h-full flex items-center justify-center p-2" @contextmenu.prevent>
         <VPdf
           :source="pdfUrl"
           :page="pageNumber"

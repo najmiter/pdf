@@ -42,7 +42,10 @@
           @error="hasError = true" />
 
         <!-- Loading State -->
-        <div v-if="isLoading" class="absolute inset-0 flex items-center justify-center bg-foreground/10 rounded">
+        <div
+          v-if="isLoading"
+          aria-busy="true"
+          class="absolute inset-0 flex items-center justify-center bg-foreground/10 rounded">
           <div class="flex flex-col items-center space-y-2">
             <div class="animate-spin rounded-full h-6 w-6 border-2 border-primary border-t-transparent" />
             <span class="text-xs text-muted-foreground">Loading...</span>

@@ -1,5 +1,5 @@
 <template>
-  <div class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur">
+  <div aria-busy="true" class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur">
     <div class="w-full">
       <div class="flex flex-col items-center space-y-4">
         <!-- Loading Spinner -->

@@ -1,7 +1,8 @@
 <template>
-  <Transition name="drag-overlay">
+  <Transition aria-busy="true" name="drag-overlay">
     <div
       v-if="isVisible"
+      aria-busy="true"
       class="fixed pointer-events-none inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-primary/40 via-primary/60 dark:via-primary/20 to-secondary/10 backdrop-blur-2xl">
       <div class="flex flex-col items-center justify-center space-y-6 min-w-120 max-w-screen w-1/2 h-1/2">
         <div class="relative">

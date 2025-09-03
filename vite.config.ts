@@ -10,4 +10,15 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'pdf-vendor': ['pdfjs-dist', 'pdf-lib', 'vue-pdf-embed'],
+          'ui-vendor': ['@iconify/vue', 'lucide-vue-next', 'radix-vue'],
+          'utils-vendor': ['jszip', '@vueuse/core', 'class-variance-authority', 'clsx', 'tailwind-merge'],
+        },
+      },
+    },
+  },
 });

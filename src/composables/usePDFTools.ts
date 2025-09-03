@@ -1,7 +1,14 @@
 import { ref, computed } from 'vue';
 import { PDFDocument, degrees } from 'pdf-lib';
-import * as pdfjsLib from 'pdfjs-dist';
 import * as JSZip from 'jszip';
+
+let pdfjsLib: any = null;
+const getPdfjsLib = async () => {
+  if (!pdfjsLib) {
+    pdfjsLib = await import('pdfjs-dist');
+  }
+  return pdfjsLib;
+};
 
 export interface PDFFile {
   id: string;
@@ -65,7 +72,8 @@ export function usePDFTools() {
   const loadPDFFile = async (file: File): Promise<PDFFile> => {
     try {
       const url = URL.createObjectURL(file);
-      const pdfjsDoc = await pdfjsLib.getDocument(url).promise;
+      const lib = await getPdfjsLib();
+      const pdfjsDoc = await lib.getDocument(url).promise;
       const pages = pdfjsDoc.numPages;
 
       const arrayBuffer = await file.arrayBuffer();
@@ -461,7 +469,8 @@ export function usePDFTools() {
         }
 
         if (filePages.length > 0) {
-          const pdf = await pdfjsLib.getDocument(file.url).promise;
+          const lib = await getPdfjsLib();
+          const pdf = await lib.getDocument(file.url).promise;
 
           for (const pageNum of filePages) {
             try {

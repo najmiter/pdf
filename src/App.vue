@@ -148,17 +148,18 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch, computed } from 'vue';
+import { onMounted, ref, watch, computed, defineAsyncComponent } from 'vue';
 import { Icon } from '@iconify/vue';
 import { usePDFTools, type PDFFile } from '@/composables/usePDFTools';
 import { useDarkMode } from '@/composables/useDarkMode';
 import { useFilePreviews } from '@/composables/useFilePreviews';
 import DropZone from '@/components/DropZone.vue';
-import DraggableFileCard from '@/components/DraggableFileCard.vue';
-import ToolsPanel from '@/components/ToolsPanel.vue';
-import LoadingOverlay from '@/components/LoadingOverlay.vue';
 import Button from '@/components/ui/Button.vue';
 import DraggingOverlay from './components/DraggingOverlay.vue';
+
+const DraggableFileCard = defineAsyncComponent(() => import('@/components/DraggableFileCard.vue'));
+const ToolsPanel = defineAsyncComponent(() => import('@/components/ToolsPanel.vue'));
+const LoadingOverlay = defineAsyncComponent(() => import('@/components/LoadingOverlay.vue'));
 
 const {
   files,

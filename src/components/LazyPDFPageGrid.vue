@@ -19,6 +19,25 @@
         <span class="text-sm text-muted-foreground">Loading more pages...</span>
       </div>
     </div>
+
+    <!-- Memory limit reached message -->
+    <div
+      v-if="visiblePages.length >= maxRenderedPages && hasMorePages"
+      class="flex items-center justify-center w-full py-8">
+      <div class="flex flex-col items-center space-y-2 text-muted-foreground">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span class="text-sm text-center px-4"
+          >Memory limit reached. Only first {{ maxRenderedPages }} pages shown.</span
+        >
+        <span class="text-xs text-center px-4">Scroll up to view loaded pages.</span>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -49,7 +68,8 @@ defineEmits<{
 const containerRef = ref<HTMLElement>();
 const sentinelRef = ref<HTMLElement>();
 const visiblePages = ref<PageInfo[]>([]);
-const batchSize = 20; // Load 20 pages at a time
+const batchSize = 20;
+const maxRenderedPages = 100;
 const loadedBatches = ref<Set<number>>(new Set());
 const isLoadingMore = ref(false);
 let scrollTimeout: number | null = null;
@@ -57,7 +77,8 @@ let intersectionObserver: IntersectionObserver | null = null;
 
 const hasMorePages = computed(() => {
   const totalBatches = Math.ceil(props.totalPages / batchSize);
-  return loadedBatches.value.size < totalBatches;
+  const reachedMaxRendered = visiblePages.value.length >= maxRenderedPages;
+  return loadedBatches.value.size < totalBatches && !reachedMaxRendered;
 });
 
 const loadNextBatch = () => {
@@ -79,8 +100,8 @@ const setupIntersectionObserver = () => {
       });
     },
     {
-      root: null, // viewport
-      rootMargin: '100px', // start loading 100px before the sentinel comes into view
+      root: null,
+      rootMargin: '100px',
       threshold: 0.1,
     }
   );
@@ -91,16 +112,21 @@ const setupIntersectionObserver = () => {
 const loadBatch = async (batchIndex: number) => {
   if (loadedBatches.value.has(batchIndex)) return;
 
-  // only show loading for subsequent batches, not the initial load
+  if (visiblePages.value.length >= maxRenderedPages) {
+    return;
+  }
+
   if (loadedBatches.value.size > 0) {
     isLoadingMore.value = true;
   }
 
   const startPage = batchIndex * batchSize + 1;
   const endPage = Math.min(props.totalPages, (batchIndex + 1) * batchSize);
+  const remainingCapacity = maxRenderedPages - visiblePages.value.length;
+  const actualEndPage = Math.min(endPage, startPage + remainingCapacity - 1);
 
   const newPages: PageInfo[] = [];
-  for (let pageNum = startPage; pageNum <= endPage; pageNum++) {
+  for (let pageNum = startPage; pageNum <= actualEndPage; pageNum++) {
     const globalIndex = props.getGlobalPageIndex(props.fileId, pageNum);
     newPages.push({
       pageNumber: pageNum,
@@ -108,14 +134,12 @@ const loadBatch = async (batchIndex: number) => {
     });
   }
 
-  // merge with existing visible pages
   const existingPageNumbers = new Set(visiblePages.value.map((p) => p.pageNumber));
   const uniqueNewPages = newPages.filter((p) => !existingPageNumbers.has(p.pageNumber));
 
   visiblePages.value = [...visiblePages.value, ...uniqueNewPages].sort((a, b) => a.pageNumber - b.pageNumber);
   loadedBatches.value.add(batchIndex);
 
-  // small delay to ensure loading indicator is visible
   if (isLoadingMore.value) {
     await new Promise((resolve) => setTimeout(resolve, 200));
     isLoadingMore.value = false;
@@ -123,16 +147,13 @@ const loadBatch = async (batchIndex: number) => {
 };
 
 onMounted(() => {
-  // for small PDFs, load all pages immediately
   if (props.totalPages <= 50) {
     for (let batch = 0; batch < Math.ceil(props.totalPages / batchSize); batch++) {
       loadBatch(batch);
     }
   } else {
-    // for large PDFs, load first batch and set up intersection observer
     loadBatch(0);
 
-    // use IntersectionObserver for more reliable detection
     nextTick(() => {
       setupIntersectionObserver();
     });

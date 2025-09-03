@@ -295,6 +295,12 @@ const handleFileInput = (e: Event) => {
 };
 
 const clearAllFiles = () => {
+  files.value.forEach((file) => {
+    if (file.url) {
+      URL.revokeObjectURL(file.url);
+    }
+  });
+
   files.value = [];
   selectedPages.value.clear();
 };

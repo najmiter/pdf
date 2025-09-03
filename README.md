@@ -12,4 +12,4 @@ A free online PDF editor that allows you to merge, split, and edit PDF files wit
 - Split PDF files into separate pages or sections
 - Remove specific pages from PDF files
 
-Access the tool at [https://pdftools.knoctal.com/](https://pdftools.knoctal.com/)
+Access the tool at [https://pdfrizz.knoctal.com/](https://pdfrizz.knoctal.com/)

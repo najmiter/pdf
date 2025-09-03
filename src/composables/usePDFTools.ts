@@ -8,6 +8,7 @@ export interface PDFFile {
   name: string;
   file: File;
   doc?: any;
+  arrayBuffer?: ArrayBuffer;
   url: string;
   pages: number;
   size: number;
@@ -67,6 +68,8 @@ export function usePDFTools() {
       const pdfjsDoc = await pdfjsLib.getDocument(url).promise;
       const pages = pdfjsDoc.numPages;
 
+      const arrayBuffer = await file.arrayBuffer();
+
       let doc: any = null;
 
       return {
@@ -74,6 +77,7 @@ export function usePDFTools() {
         name: file.name,
         file,
         doc,
+        arrayBuffer,
         url,
         pages,
         size: file.size,
@@ -151,8 +155,7 @@ export function usePDFTools() {
       if (file) {
         processingStep.value = `Processing ${file.name}...`;
 
-        const arrayBuffer = await file.file.arrayBuffer();
-        const doc = await PDFDocument.load(arrayBuffer);
+        const doc = await PDFDocument.load(file.arrayBuffer!);
 
         const selectedPageNumbers: number[] = [];
         for (let pageNum = 1; pageNum <= file.pages; pageNum++) {
@@ -179,6 +182,7 @@ export function usePDFTools() {
           const progress = (processedPages / totalPages) * 90;
           processingProgress.value = progress;
 
+          // gc time? maybe remove it - idk
           await new Promise((resolve) => setTimeout(resolve, 10));
         }
       }
@@ -213,7 +217,7 @@ export function usePDFTools() {
     let processedRanges = 0;
     const splits: Blob[] = [];
 
-    const arrayBuffer = await file.file.arrayBuffer();
+    const arrayBuffer = file.arrayBuffer!;
     const doc = await PDFDocument.load(arrayBuffer);
 
     for (const range of ranges) {
@@ -255,7 +259,7 @@ export function usePDFTools() {
     processingProgress.value = 0;
     processingStep.value = 'Analyzing pages...';
 
-    const arrayBuffer = await file.file.arrayBuffer();
+    const arrayBuffer = file.arrayBuffer!;
     const doc = await PDFDocument.load(arrayBuffer);
 
     const allPages = Array.from({ length: file.pages }, (_, i) => i);
@@ -299,7 +303,7 @@ export function usePDFTools() {
     processingProgress.value = 0;
     processingStep.value = 'Preparing to rotate...';
 
-    const arrayBuffer = await file.file.arrayBuffer();
+    const arrayBuffer = file.arrayBuffer!;
     const doc = await PDFDocument.load(arrayBuffer);
 
     const newPdf = await PDFDocument.create();
@@ -353,10 +357,10 @@ export function usePDFTools() {
       throw new Error('Invalid insertion point');
     }
 
-    const originalArrayBuffer = await originalFile.file.arrayBuffer();
+    const originalArrayBuffer = originalFile.arrayBuffer!;
     const originalDoc = await PDFDocument.load(originalArrayBuffer);
 
-    const insertArrayBuffer = await insertFile.file.arrayBuffer();
+    const insertArrayBuffer = insertFile.arrayBuffer!;
     const insertDoc = await PDFDocument.load(insertArrayBuffer);
 
     const mergedPdf = await PDFDocument.create();

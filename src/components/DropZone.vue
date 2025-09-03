@@ -19,9 +19,9 @@
       </div>
 
       <div class="space-y-2 select-none">
-        <h3 :class="cn('text-lg font-semibold', { 'text-primary': isDragOver, 'text-foreground': !isDragOver })">
+        <div :class="cn('text-lg font-semibold', { 'text-primary': isDragOver, 'text-foreground': !isDragOver })">
           {{ isDragOver ? 'Drop your PDF files here' : 'Upload PDF Files' }}
-        </h3>
+        </div>
         <p class="text-muted-foreground text-sm max-w-md">
           {{ isDragOver ? 'Release to upload' : 'Drag and drop your PDF files here, or click to browse' }}
         </p>

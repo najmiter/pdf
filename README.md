@@ -1,4 +1,4 @@
-# PDF Tool
+# PdfRizz
 
 <p align="center"><img src="public/icon.svg" width="100" height="100" alt="Logo"></p>
 

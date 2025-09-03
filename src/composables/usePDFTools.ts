@@ -446,7 +446,6 @@ export function usePDFTools() {
 
     try {
       const zip = new JSZip.default();
-      const imagesFolder = zip.folder('pdf_images');
 
       let globalIndex = 1;
       let processedPages = 0;
@@ -503,7 +502,7 @@ export function usePDFTools() {
               canvas.height = 0;
 
               const filename = `${file.name.replace('.pdf', '')}_page_${pageNum}.${format}`;
-              imagesFolder!.file(filename, blob);
+              zip?.file(filename, blob);
               processedPages++;
 
               const progress = (processedPages / totalPages) * 100;

@@ -332,6 +332,7 @@ import { ref, computed } from 'vue';
 import { Icon } from '@iconify/vue';
 import Button from '@/components/ui/Button.vue';
 import type { PDFFile } from '@/composables/usePDFTools';
+import * as JSZip from 'jszip';
 
 interface Props {
   files: PDFFile[];
@@ -402,7 +403,6 @@ const handleSplitSelected = async () => {
   if (props.selectedPages.size === 0) return;
 
   try {
-    // Group selected pages by file
     const pagesByFile = new Map<string, number[]>();
 
     let globalIndex = 1;
@@ -419,6 +419,7 @@ const handleSplitSelected = async () => {
       }
     }
 
+    // each page separately
     if (splitMergeOption.value === 'merged' && props.selectedPages.size > 1) {
       const allPageBlobs: Blob[] = [];
       const selectedPageInfo: string[] = [];
@@ -457,6 +458,25 @@ const handleSplitSelected = async () => {
 
         props.downloadBlob(mergedBlob, filename);
       }
+    } else if (splitMergeOption.value === 'separate' && props.selectedPages.size > 1) {
+      const zip = new JSZip.default();
+
+      for (const [fileId, pages] of pagesByFile) {
+        const file = props.files.find((f) => f.id === fileId);
+        if (file) {
+          const ranges = pages.map((p) => ({ start: p, end: p }));
+          const splitBlobs = await props.splitPDF(fileId, ranges);
+
+          splitBlobs.forEach((blob, index) => {
+            const filename = `${file.name.replace('.pdf', '')}_page_${pages[index]}.pdf`;
+            zip?.file(filename, blob);
+          });
+        }
+      }
+
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      const zipFilename = `splitted_pdfs.zip`;
+      props.downloadBlob(zipBlob, zipFilename);
     } else {
       for (const [fileId, pages] of pagesByFile) {
         const file = props.files.find((f) => f.id === fileId);

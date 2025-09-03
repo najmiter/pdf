@@ -29,6 +29,17 @@ export function usePDFTools() {
 
   const totalPages = computed(() => files.value.reduce((sum, file) => sum + file.pages, 0));
 
+  const getGlobalPageIndex = (fileId: string, pageNumber: number): number => {
+    let globalIndex = 0;
+    for (const file of files.value) {
+      if (file.id === fileId) {
+        return globalIndex + pageNumber;
+      }
+      globalIndex += file.pages;
+    }
+    return globalIndex;
+  };
+
   const parsePageRange = (range: string): PageRange[] => {
     const ranges: PageRange[] = [];
     const parts = range.split(',').map((p) => p.trim());
@@ -108,15 +119,45 @@ export function usePDFTools() {
 
     const mergedPdf = await PDFDocument.create();
     let processedPages = 0;
-    const totalPages = selectedFileIds.reduce((sum, id) => {
-      const file = files.value.find((f) => f.id === id);
-      return sum + (file?.pages || 0);
-    }, 0);
+
+    let totalPages = 0;
+    for (const fileId of selectedFileIds) {
+      const file = files.value.find((f) => f.id === fileId);
+      if (file) {
+        const fileGlobalIndices = new Set<number>();
+        for (let pageNum = 1; pageNum <= file.pages; pageNum++) {
+          const globalIndex = getGlobalPageIndex(fileId, pageNum);
+          if (selectedPages.value.has(globalIndex)) {
+            fileGlobalIndices.add(pageNum);
+          }
+        }
+
+        if (fileGlobalIndices.size > 0) {
+          totalPages += fileGlobalIndices.size;
+        } else {
+          totalPages += file.pages;
+        }
+      }
+    }
 
     for (const fileId of selectedFileIds) {
       const file = files.value.find((f) => f.id === fileId);
       if (file?.doc) {
-        const pageIndices = file.doc.getPageIndices();
+        const selectedPageNumbers: number[] = [];
+        for (let pageNum = 1; pageNum <= file.pages; pageNum++) {
+          const globalIndex = getGlobalPageIndex(fileId, pageNum);
+          if (selectedPages.value.has(globalIndex)) {
+            selectedPageNumbers.push(pageNum - 1);
+          }
+        }
+
+        let pageIndices: number[];
+        if (selectedPageNumbers.length > 0) {
+          pageIndices = selectedPageNumbers;
+        } else {
+          pageIndices = file.doc.getPageIndices();
+        }
+
         const batchSize = 10;
         for (let i = 0; i < pageIndices.length; i += batchSize) {
           const batchIndices = pageIndices.slice(i, i + batchSize);
@@ -124,7 +165,7 @@ export function usePDFTools() {
           pages.forEach((page) => mergedPdf.addPage(page));
         }
 
-        processedPages += file.pages;
+        processedPages += pageIndices.length;
         const progress = (processedPages / totalPages) * 90;
         processingProgress.value = progress;
         processingStep.value = `Merging ${file.name}...`;

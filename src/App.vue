@@ -88,29 +88,23 @@
           </div>
 
           <!-- Pages by File -->
-          <div v-for="file in files" :key="file.id" class="space-y-4">
-            <div class="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-              <div class="flex items-center space-x-3">
-                <Icon icon="lucide:file-text" class="h-5 w-5 text-primary" />
-                <div>
-                  <h3 class="font-medium">{{ file.name }}</h3>
-                  <p class="text-sm text-muted-foreground">{{ file.pages }} pages • {{ formatFileSize(file.size) }}</p>
-                </div>
-              </div>
-              <Button variant="ghost" size="sm" @click="removeFile(file.id)">
-                <Icon icon="lucide:x" class="h-4 w-4" />
-              </Button>
-            </div>
-
-            <!-- Page Grid for this file -->
-            <LazyPDFPageGrid
-              :fileId="file.id"
-              :fileName="file.name"
-              :pdfUrl="file.url"
-              :totalPages="file.pages"
+          <div class="space-y-4">
+            <DraggableFileCard
+              v-for="(file, index) in orderedFiles"
+              :key="file.id"
+              :file="file"
+              :isFirstFile="index === 0"
+              :showPreview="filePreviewStates[file.id]"
               :selectedPages="selectedPages"
               :getGlobalPageIndex="getGlobalPageIndex"
-              @select="(pageNum) => togglePageSelection(file.id, pageNum)" />
+              @remove="removeFile(file.id)"
+              @select="(pageNum) => togglePageSelection(file.id, pageNum)"
+              @togglePreview="toggleFilePreview(file.id)"
+              @dragStart="handleDragStart"
+              @dragEnd="handleDragEnd"
+              @drop="handleFileDrop"
+              @rangeSelect="handleRangeSelect"
+              @rangeClear="handleRangeClear" />
           </div>
         </div>
       </main>
@@ -154,12 +148,13 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue';
+import { onMounted, ref, watch, computed } from 'vue';
 import { Icon } from '@iconify/vue';
-import { usePDFTools } from '@/composables/usePDFTools';
+import { usePDFTools, type PDFFile } from '@/composables/usePDFTools';
 import { useDarkMode } from '@/composables/useDarkMode';
+import { useFilePreviews } from '@/composables/useFilePreviews';
 import DropZone from '@/components/DropZone.vue';
-import LazyPDFPageGrid from '@/components/LazyPDFPageGrid.vue';
+import DraggableFileCard from '@/components/DraggableFileCard.vue';
 import ToolsPanel from '@/components/ToolsPanel.vue';
 import LoadingOverlay from '@/components/LoadingOverlay.vue';
 import Button from '@/components/ui/Button.vue';
@@ -184,9 +179,18 @@ const {
 } = usePDFTools();
 
 const { isDark, toggleDarkMode } = useDarkMode();
+const {
+  initializeFilePreview,
+  togglePreview,
+  getPreviewState,
+  reorderFiles,
+  removeFile: removeFilePreview,
+  getOrderedFileIds,
+} = useFilePreviews();
 
 const fileInputRef = ref<HTMLInputElement>();
 const isDragging = ref(false);
+const isCardReordering = ref(false);
 const dragCounter = ref(0);
 const repoStarsCount = ref<string | null>(null);
 
@@ -200,12 +204,43 @@ onMounted(async () => {
 
 watch(
   files,
-  (newFiles) => {
-    if (newFiles.length > 0) {
-    }
+  (newFiles: PDFFile[], oldFiles: PDFFile[] | undefined) => {
+    // Initialize preview states for new files
+    newFiles.forEach((file: PDFFile, index: number) => {
+      const isNewFile = !oldFiles?.some((oldFile: PDFFile) => oldFile.id === file.id);
+      if (isNewFile) {
+        initializeFilePreview(file.id, index === 0);
+      }
+    });
+
+    // Clean up preview states for removed files
+    oldFiles?.forEach((oldFile: PDFFile) => {
+      const stillExists = newFiles.some((file: PDFFile) => file.id === oldFile.id);
+      if (!stillExists) {
+        removeFilePreview(oldFile.id);
+      }
+    });
   },
   { deep: true }
 );
+
+const filePreviewStates = computed(() => {
+  const states: Record<string, boolean> = {};
+  files.value.forEach((file, index) => {
+    const state = getPreviewState(file.id);
+    states[file.id] = state ? state.showPreview : index === 0;
+  });
+  return states;
+});
+
+const orderedFiles = computed(() => {
+  const orderedIds = getOrderedFileIds();
+  if (orderedIds.length === 0) {
+    return files.value;
+  }
+  const fileMap = new Map(files.value.map((file) => [file.id, file]));
+  return orderedIds.map((id) => fileMap.get(id)).filter((file): file is PDFFile => Boolean(file));
+});
 
 const handleFilesSelected = async (fileList: FileList | File[]) => {
   await addFiles(fileList);
@@ -213,6 +248,12 @@ const handleFilesSelected = async (fileList: FileList | File[]) => {
 
 const handleDragEnter = (event: DragEvent) => {
   event.preventDefault();
+
+  // Don't show overlay if we're reordering cards
+  if (isCardReordering.value) {
+    return;
+  }
+
   dragCounter.value++;
   if (dragCounter.value === 1) {
     isDragging.value = true;
@@ -225,6 +266,12 @@ const handleDragOver = (event: DragEvent) => {
 
 const handleDragLeave = (event: DragEvent) => {
   event.preventDefault();
+
+  // Don't hide overlay if we're reordering cards
+  if (isCardReordering.value) {
+    return;
+  }
+
   // mouse is still within the element
   if (event.relatedTarget && (event.currentTarget as HTMLElement).contains(event.relatedTarget as Node)) {
     return;
@@ -236,6 +283,11 @@ const handleDragLeave = (event: DragEvent) => {
 };
 
 const handleDrop = async (event: DragEvent) => {
+  // Don't handle file drops if we're reordering cards
+  if (isCardReordering.value) {
+    return;
+  }
+
   isDragging.value = false;
   dragCounter.value = 0;
   const droppedFiles = Array.from(event.dataTransfer?.files || []);
@@ -259,19 +311,7 @@ const handleFileInput = (e: Event) => {
 const clearAllFiles = () => {
   files.value = [];
   selectedPages.value.clear();
-};
-
-const formatFileSize = (bytes: number): string => {
-  const units = ['B', 'KB', 'MB', 'GB'];
-  let size = bytes;
-  let unitIndex = 0;
-
-  while (size >= 1024 && unitIndex < units.length - 1) {
-    size /= 1024;
-    unitIndex++;
-  }
-
-  return `${size.toFixed(1)} ${units[unitIndex]}`;
+  // Note: Preview states are cleared automatically by the watch
 };
 
 const getGlobalPageIndex = (fileId: string, pageNumber: number): number => {
@@ -344,5 +384,45 @@ const getLoadingMessage = () => {
     default:
       return 'Please wait while we process your files';
   }
+};
+
+const toggleFilePreview = (fileId: string) => {
+  togglePreview(fileId);
+};
+
+const handleDragStart = () => {
+  isCardReordering.value = true;
+};
+
+const handleDragEnd = () => {
+  isCardReordering.value = false;
+};
+
+const handleFileDrop = (draggedFileId: string, targetFileId: string) => {
+  const draggedIndex = files.value.findIndex((f) => f.id === draggedFileId);
+  const targetIndex = files.value.findIndex((f) => f.id === targetFileId);
+
+  if (draggedIndex !== -1 && targetIndex !== -1) {
+    // Reorder the files array
+    const newFiles = [...files.value];
+    const [draggedFile] = newFiles.splice(draggedIndex, 1);
+    newFiles.splice(targetIndex, 0, draggedFile);
+    files.value = newFiles;
+
+    // Update the preview states order
+    reorderFiles(draggedFileId, targetIndex);
+  }
+};
+
+const handleRangeSelect = (pagesToSelect: number[]) => {
+  // Add the selected pages to the global selection
+  pagesToSelect.forEach((pageNum) => {
+    selectedPages.value.add(pageNum);
+  });
+};
+
+const handleRangeClear = () => {
+  // For now, we don't clear all selections when clearing range
+  // This could be enhanced to clear only pages from the specific file
 };
 </script>

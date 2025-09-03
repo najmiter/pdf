@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://pdftools.knoctal.com/sitemap.xml
+Sitemap: https://pdfrizz.knoctal.com/sitemap.xml

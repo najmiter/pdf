@@ -94,7 +94,7 @@
               :key="file.id"
               :file="file"
               :isFirstFile="index === 0"
-              :showPreview="filePreviewStates[file.id]"
+              :showPreview="filePreviewStates[file.id]?.showPreview ?? index === 0"
               :selectedPages="selectedPages"
               :getGlobalPageIndex="getGlobalPageIndex"
               @remove="removeFile(file.id)"
@@ -182,10 +182,10 @@ const { isDark, toggleDarkMode } = useDarkMode();
 const {
   initializeFilePreview,
   togglePreview,
-  getPreviewState,
   reorderFiles,
   removeFile: removeFilePreview,
   getOrderedFileIds,
+  filePreviewStates,
 } = useFilePreviews();
 
 const fileInputRef = ref<HTMLInputElement>();
@@ -204,16 +204,15 @@ onMounted(async () => {
 
 watch(
   files,
-  (newFiles: PDFFile[], oldFiles: PDFFile[] | undefined) => {
-    // Initialize preview states for new files
+  (newFiles: PDFFile[], oldFiles) => {
     newFiles.forEach((file: PDFFile, index: number) => {
       const isNewFile = !oldFiles?.some((oldFile: PDFFile) => oldFile.id === file.id);
+      console.log('isNewFile', isNewFile, file.id, newFiles === oldFiles);
       if (isNewFile) {
         initializeFilePreview(file.id, index === 0);
       }
     });
 
-    // Clean up preview states for removed files
     oldFiles?.forEach((oldFile: PDFFile) => {
       const stillExists = newFiles.some((file: PDFFile) => file.id === oldFile.id);
       if (!stillExists) {
@@ -223,15 +222,6 @@ watch(
   },
   { deep: true }
 );
-
-const filePreviewStates = computed(() => {
-  const states: Record<string, boolean> = {};
-  files.value.forEach((file, index) => {
-    const state = getPreviewState(file.id);
-    states[file.id] = state ? state.showPreview : index === 0;
-  });
-  return states;
-});
 
 const orderedFiles = computed(() => {
   const orderedIds = getOrderedFileIds();
@@ -249,7 +239,6 @@ const handleFilesSelected = async (fileList: FileList | File[]) => {
 const handleDragEnter = (event: DragEvent) => {
   event.preventDefault();
 
-  // Don't show overlay if we're reordering cards
   if (isCardReordering.value) {
     return;
   }
@@ -267,12 +256,10 @@ const handleDragOver = (event: DragEvent) => {
 const handleDragLeave = (event: DragEvent) => {
   event.preventDefault();
 
-  // Don't hide overlay if we're reordering cards
   if (isCardReordering.value) {
     return;
   }
 
-  // mouse is still within the element
   if (event.relatedTarget && (event.currentTarget as HTMLElement).contains(event.relatedTarget as Node)) {
     return;
   }
@@ -283,7 +270,6 @@ const handleDragLeave = (event: DragEvent) => {
 };
 
 const handleDrop = async (event: DragEvent) => {
-  // Don't handle file drops if we're reordering cards
   if (isCardReordering.value) {
     return;
   }
@@ -311,7 +297,6 @@ const handleFileInput = (e: Event) => {
 const clearAllFiles = () => {
   files.value = [];
   selectedPages.value.clear();
-  // Note: Preview states are cleared automatically by the watch
 };
 
 const getGlobalPageIndex = (fileId: string, pageNumber: number): number => {
@@ -387,6 +372,7 @@ const getLoadingMessage = () => {
 };
 
 const toggleFilePreview = (fileId: string) => {
+  console.log('toggleFilePreview', fileId);
   togglePreview(fileId);
 };
 
@@ -403,26 +389,20 @@ const handleFileDrop = (draggedFileId: string, targetFileId: string) => {
   const targetIndex = files.value.findIndex((f) => f.id === targetFileId);
 
   if (draggedIndex !== -1 && targetIndex !== -1) {
-    // Reorder the files array
     const newFiles = [...files.value];
     const [draggedFile] = newFiles.splice(draggedIndex, 1);
     newFiles.splice(targetIndex, 0, draggedFile);
     files.value = newFiles;
 
-    // Update the preview states order
     reorderFiles(draggedFileId, targetIndex);
   }
 };
 
 const handleRangeSelect = (pagesToSelect: number[]) => {
-  // Add the selected pages to the global selection
   pagesToSelect.forEach((pageNum) => {
     selectedPages.value.add(pageNum);
   });
 };
 
-const handleRangeClear = () => {
-  // For now, we don't clear all selections when clearing range
-  // This could be enhanced to clear only pages from the specific file
-};
+const handleRangeClear = () => {};
 </script>

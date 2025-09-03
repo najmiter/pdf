@@ -1,4 +1,4 @@
-import { ref } from 'vue';
+import { reactive } from 'vue';
 
 export interface FilePreviewState {
   id: string;
@@ -7,66 +7,63 @@ export interface FilePreviewState {
 }
 
 export function useFilePreviews() {
-  const filePreviewStates = ref<Map<string, FilePreviewState>>(new Map());
+  const filePreviewStates = reactive<Record<string, FilePreviewState>>({});
 
   const initializeFilePreview = (fileId: string, isFirstFile: boolean = false) => {
-    filePreviewStates.value.set(fileId, {
+    filePreviewStates[fileId] = {
       id: fileId,
-      showPreview: isFirstFile, // Only show preview for first file by default
-      order: filePreviewStates.value.size,
-    });
+      showPreview: isFirstFile,
+      order: Object.keys(filePreviewStates).length,
+    };
   };
 
   const togglePreview = (fileId: string) => {
-    const state = filePreviewStates.value.get(fileId);
+    const state = filePreviewStates[fileId];
+    console.log('togglePreview', state);
     if (state) {
       state.showPreview = !state.showPreview;
     }
   };
 
   const getPreviewState = (fileId: string): FilePreviewState | undefined => {
-    return filePreviewStates.value.get(fileId);
+    return filePreviewStates[fileId];
   };
 
   const reorderFiles = (draggedFileId: string, newPosition: number) => {
-    const draggedState = filePreviewStates.value.get(draggedFileId);
+    const draggedState = filePreviewStates[draggedFileId];
     if (!draggedState) return;
 
     const currentOrder = draggedState.order;
 
-    // Update orders of other files
-    for (const [id, fileState] of filePreviewStates.value) {
+    for (const id in filePreviewStates) {
       if (id === draggedFileId) continue;
 
+      const fileState = filePreviewStates[id];
       if (currentOrder < newPosition) {
-        // Moving down: shift items up
         if (fileState.order > currentOrder && fileState.order <= newPosition) {
           fileState.order--;
         }
       } else {
-        // Moving up: shift items down
         if (fileState.order >= newPosition && fileState.order < currentOrder) {
           fileState.order++;
         }
       }
     }
 
-    // Set new order for dragged item
     draggedState.order = newPosition;
   };
 
   const removeFile = (fileId: string) => {
-    filePreviewStates.value.delete(fileId);
+    delete filePreviewStates[fileId];
 
-    // Reorder remaining files
-    const remainingStates = Array.from(filePreviewStates.value.values()).sort((a, b) => a.order - b.order);
+    const remainingStates = Object.values(filePreviewStates).sort((a, b) => a.order - b.order);
     remainingStates.forEach((state, index) => {
       state.order = index;
     });
   };
 
   const getOrderedFileIds = (): string[] => {
-    return Array.from(filePreviewStates.value.values())
+    return Object.values(filePreviewStates)
       .sort((a, b) => a.order - b.order)
       .map((state) => state.id);
   };

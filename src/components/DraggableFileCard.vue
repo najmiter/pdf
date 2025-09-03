@@ -12,18 +12,18 @@
     @dragover.prevent="handleDragOver"
     @dragleave="handleDragLeave"
     @drop.prevent="handleDrop">
-    <!-- Drag Handle -->
-    <div
-      class="absolute top-2 right-12 flex items-center justify-center w-6 h-6 rounded bg-background/80 backdrop-blur-sm">
-      <Icon icon="lucide:grip-vertical" class="h-4 w-4 text-muted-foreground" />
-    </div>
-
     <!-- File Info -->
-    <div class="flex items-center space-x-3 pr-12">
-      <Icon icon="lucide:file-text" class="h-5 w-5 text-primary flex-shrink-0" />
-      <div class="flex-1 min-w-0">
-        <h3 class="font-medium truncate" :title="file.name">{{ file.name }}</h3>
-        <p class="text-sm text-muted-foreground">{{ file.pages }} pages • {{ formatFileSize(file.size) }}</p>
+    <div class="flex items-center justify-between gap-4">
+      <div class="flex items-center space-x-3 pr-12">
+        <Icon icon="lucide:file-text" class="h-5 w-5 text-primary flex-shrink-0" />
+        <div class="flex-1 min-w-0">
+          <h3 class="font-medium truncate" :title="file.name">{{ file.name }}</h3>
+          <p class="text-sm text-muted-foreground">{{ file.pages }} pages • {{ formatFileSize(file.size) }}</p>
+        </div>
+      </div>
+      <!-- Drag Handle -->
+      <div class="p-2">
+        <Icon icon="lucide:grip-vertical" class="h-4 w-4 text-muted-foreground" />
       </div>
     </div>
 
@@ -31,13 +31,13 @@
     <div class="flex items-center justify-between mt-3 pt-3 border-t border-t-foreground/10">
       <div class="flex items-center space-x-2">
         <!-- Preview Toggle Button -->
-        <Button variant="ghost" size="sm" @click.stop="togglePreview" class="h-8 px-2">
+        <Button variant="soft" size="sm" @click.stop="togglePreview" class="h-8 px-2">
           <Icon :icon="showPreview ? 'lucide:eye-off' : 'lucide:eye'" class="h-4 w-4 mr-1" />
           <span class="text-xs">{{ showPreview ? 'Hide' : 'Show' }} Preview</span>
         </Button>
 
         <!-- Page Range Selector Button -->
-        <Button variant="ghost" size="sm" @click.stop="toggleRangeSelector" class="h-8 px-2">
+        <Button variant="soft" size="sm" @click.stop="toggleRangeSelector" class="h-8 px-2">
           <Icon icon="lucide:list" class="h-4 w-4 mr-1" />
           <span class="text-xs">Select Range</span>
         </Button>
@@ -59,32 +59,33 @@
           </Button>
         </div>
 
-        <div class="space-y-2">
-          <input
-            v-model="rangeInput"
-            type="text"
-            placeholder="e.g., 1-5,8,10-15"
-            class="w-full px-2 py-1 border border-input bg-background rounded text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-            @keydown.enter="applyRangeSelection"
-            @input="validateRange" />
-          <p class="text-xs text-muted-foreground">Enter page ranges separated by commas (e.g., 1-5,8,10-15)</p>
-          <div v-if="rangeError" class="text-xs text-red-600">
-            {{ rangeError }}
+        <div class="flex items-start justify-between gap-2">
+          <div class="space-y-2 flex-1">
+            <input
+              v-model="rangeInput"
+              type="text"
+              placeholder="e.g., 1-5,8,10-15"
+              class="w-full px-2 py-1 border border-input bg-background rounded text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+              @keydown.enter="applyRangeSelection"
+              @input="validateRange" />
+            <p class="text-xs text-muted-foreground">Enter page ranges separated by commas (e.g., 1-5,8,10-15)</p>
+            <div v-if="rangeError" class="text-xs text-red-600">
+              {{ rangeError }}
+            </div>
           </div>
-        </div>
-
-        <div class="flex gap-2">
-          <Button
-            type="button"
-            @click="applyRangeSelection"
-            :disabled="!rangeInput.trim() || !!rangeError"
-            class="flex-1 text-xs"
-            size="sm">
-            Select Pages
-          </Button>
-          <Button type="button" @click="clearRangeSelection" variant="outline" class="flex-1 text-xs" size="sm">
-            Clear
-          </Button>
+          <div class="flex gap-2">
+            <Button
+              type="button"
+              @click="applyRangeSelection"
+              :disabled="!rangeInput.trim() || !!rangeError"
+              class="flex-1 text-xs"
+              size="sm">
+              Select Pages
+            </Button>
+            <Button type="button" @click="clearRangeSelection" variant="soft" class="flex-1 text-xs" size="sm">
+              Clear
+            </Button>
+          </div>
         </div>
       </div>
     </div>
@@ -154,7 +155,6 @@ const handleDragStart = (event: DragEvent) => {
   event.dataTransfer!.effectAllowed = 'move';
   event.dataTransfer!.setData('text/plain', props.file.id);
 
-  // Add visual feedback
   cardRef.value.style.opacity = '0.5';
 
   emit('dragStart', props.file.id);
@@ -176,7 +176,6 @@ const handleDragOver = () => {
 };
 
 const handleDragLeave = (event: DragEvent) => {
-  // Only remove drag over if we're actually leaving the element
   if (event.relatedTarget && !cardRef.value?.contains(event.relatedTarget as Node)) {
     isDragOver.value = false;
   }
@@ -263,7 +262,6 @@ const applyRangeSelection = () => {
       }
     }
 
-    // Emit selection change for this file's pages
     emit('rangeSelect', selectedPages);
     showRangeSelector.value = false;
     rangeInput.value = '';
@@ -276,7 +274,6 @@ const applyRangeSelection = () => {
 const clearRangeSelection = () => {
   rangeInput.value = '';
   rangeError.value = '';
-  // Emit clear selection for this file
   emit('rangeClear');
 };
 

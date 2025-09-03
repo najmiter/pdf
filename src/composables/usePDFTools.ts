@@ -53,10 +53,8 @@ export function usePDFTools() {
   const loadPDFFile = async (file: File): Promise<PDFFile> => {
     try {
       const url = URL.createObjectURL(file);
-      // Use pdfjsLib for faster page count extraction
       const pdfjsDoc = await pdfjsLib.getDocument(url).promise;
       const pages = pdfjsDoc.numPages;
-      // Load pdf-lib doc for manipulation
       const arrayBuffer = await file.arrayBuffer();
       const doc = await PDFDocument.load(arrayBuffer);
 
@@ -89,7 +87,7 @@ export function usePDFTools() {
         }
       }
 
-      files.value.push(...newFiles);
+      files.value = [...files.value, ...newFiles];
     } catch (error) {
       console.error('Error adding files:', error);
     } finally {
@@ -99,10 +97,7 @@ export function usePDFTools() {
   };
 
   const removeFile = (fileId: string) => {
-    const index = files.value.findIndex((f) => f.id === fileId);
-    if (index !== -1) {
-      files.value.splice(index, 1);
-    }
+    files.value = files.value.filter((f) => f.id !== fileId);
   };
 
   const mergePDFs = async (selectedFileIds: string[]): Promise<Blob> => {
@@ -122,7 +117,7 @@ export function usePDFTools() {
       const file = files.value.find((f) => f.id === fileId);
       if (file?.doc) {
         const pageIndices = file.doc.getPageIndices();
-        const batchSize = 10; // Process 10 pages at a time
+        const batchSize = 10;
         for (let i = 0; i < pageIndices.length; i += batchSize) {
           const batchIndices = pageIndices.slice(i, i + batchSize);
           const pages = await mergedPdf.copyPages(file.doc, batchIndices);
@@ -130,7 +125,7 @@ export function usePDFTools() {
         }
 
         processedPages += file.pages;
-        const progress = (processedPages / totalPages) * 90; // Leave 10% for final save
+        const progress = (processedPages / totalPages) * 90;
         processingProgress.value = progress;
         processingStep.value = `Merging ${file.name}...`;
       }
@@ -170,7 +165,7 @@ export function usePDFTools() {
       const pageIndices = Array.from({ length: range.end - range.start + 1 }, (_, i) => range.start - 1 + i);
 
       processingStep.value = `Processing pages ${range.start}-${range.end}...`;
-      const batchSize = 5; // Smaller batch for splits
+      const batchSize = 5;
       for (let i = 0; i < pageIndices.length; i += batchSize) {
         const batch = pageIndices.slice(i, i + batchSize);
         const pages = await newPdf.copyPages(file.doc, batch);
@@ -292,7 +287,6 @@ export function usePDFTools() {
 
     const mergedPdf = await PDFDocument.create();
 
-    // first half of original (pages before insertion point)
     const firstHalfIndices = Array.from({ length: insertAtPage - 1 }, (_, i) => i);
     if (firstHalfIndices.length > 0) {
       const batchSize = 10;
@@ -306,7 +300,6 @@ export function usePDFTools() {
     processingProgress.value = 25;
     processingStep.value = 'Inserting pages...';
 
-    // insert pages from source
     let insertPages: number[];
     if (ranges && ranges.length > 0) {
       insertPages = [];
@@ -329,7 +322,6 @@ export function usePDFTools() {
     processingProgress.value = 75;
     processingStep.value = 'Adding remaining pages...';
 
-    // 2nd half of original (pages after insertion point)
     const secondHalfIndices = Array.from(
       { length: originalFile.pages - insertAtPage + 1 },
       (_, i) => insertAtPage - 1 + i
@@ -375,7 +367,7 @@ export function usePDFTools() {
       let globalIndex = 1;
       let imageCount = 0;
       const totalPages = selectedPages.value.size;
-      const batchSize = Math.min(5, Math.max(1, Math.floor(100 / totalPages))); // Dynamic batch size based on total pages
+      const batchSize = Math.min(5, Math.max(1, Math.floor(100 / totalPages)));
       let processedPages = 0;
 
       const batchPromises: Promise<{ file: PDFFile; pageNum: number; blob: Blob }>[] = [];
@@ -426,14 +418,12 @@ export function usePDFTools() {
             if (batchPromises.length >= batchSize) {
               const batchResults = await Promise.all(batchPromises.splice(0, batchSize));
 
-              // add results to zip
               for (const { file, pageNum, blob } of batchResults) {
                 const filename = `${file.name.replace('.pdf', '')}_page_${pageNum}.${format}`;
                 imagesFolder!.file(filename, blob);
                 imageCount++;
                 processedPages++;
 
-                // update progress
                 const progress = (processedPages / totalPages) * 100;
                 const currentStep = `Processing page ${processedPages} of ${totalPages}`;
                 onProgress?.(progress, currentStep);
@@ -441,18 +431,15 @@ export function usePDFTools() {
                 processingStep.value = currentStep;
               }
 
-              // Small delay between batches to allow garbage collection
               await new Promise((resolve) => setTimeout(resolve, 100));
             }
           }
         }
       }
 
-      // remaining batches
       if (batchPromises.length > 0) {
         const batchResults = await Promise.all(batchPromises);
 
-        // add results to zip
         for (const { file, pageNum, blob } of batchResults) {
           const filename = `${file.name.replace('.pdf', '')}_page_${pageNum}.${format}`;
           imagesFolder!.file(filename, blob);
@@ -471,7 +458,6 @@ export function usePDFTools() {
       processingProgress.value = 95;
       processingStep.value = 'Generating ZIP file...';
 
-      // zip file
       const zipBlob = await zip.generateAsync({ type: 'blob' });
       const zipFilename = `pdf_images_${imageCount}_pages.zip`;
 

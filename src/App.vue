@@ -6,7 +6,7 @@
         <div class="flex items-center justify-between">
           <div class="flex items-center space-x-2 cursor-default select-none">
             <img src="/icon.svg" width="24" height="24" alt="pdf tools logo" />
-            <h1 class="text-xl font-bold">PDF Tools</h1>
+            <h1 class="text-2xl font-medium font-main">PdfRizz</h1>
           </div>
           <div class="flex items-center space-x-4">
             <div v-if="files.length > 0" class="text-sm text-muted-foreground">

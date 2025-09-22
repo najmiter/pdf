@@ -19,7 +19,6 @@ export function useFilePreviews() {
 
   const togglePreview = (fileId: string) => {
     const state = filePreviewStates[fileId];
-    console.log('togglePreview', state);
     if (state) {
       state.showPreview = !state.showPreview;
     }

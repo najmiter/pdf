@@ -208,7 +208,6 @@ watch(
   (newFiles: PDFFile[], oldFiles) => {
     newFiles.forEach((file: PDFFile, index: number) => {
       const isNewFile = !oldFiles?.some((oldFile: PDFFile) => oldFile.id === file.id);
-      console.log('isNewFile', isNewFile, file.id, newFiles === oldFiles);
       if (isNewFile) {
         initializeFilePreview(file.id, index === 0);
       }
@@ -379,7 +378,6 @@ const getLoadingMessage = () => {
 };
 
 const toggleFilePreview = (fileId: string) => {
-  console.log('toggleFilePreview', fileId);
   togglePreview(fileId);
 };
 

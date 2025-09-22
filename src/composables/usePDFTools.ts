@@ -91,7 +91,7 @@ export function usePDFTools() {
         size: file.size,
       };
     } catch (error) {
-      console.error('Error loading PDF:', error);
+      // console.error('Error loading PDF:', error);
       throw error;
     }
   };
@@ -112,7 +112,7 @@ export function usePDFTools() {
 
       files.value = [...files.value, ...newFiles];
     } catch (error) {
-      console.error('Error adding files:', error);
+      // console.error('Error adding files:', error);
     } finally {
       isProcessing.value = false;
       currentTool.value = null;
@@ -522,7 +522,7 @@ export function usePDFTools() {
 
               await new Promise((resolve) => setTimeout(resolve, 50));
             } catch (error) {
-              console.error(`Error processing page ${pageNum} of ${file.name}:`, error);
+              // console.error(`Error processing page ${pageNum} of ${file.name}:`, error);
             }
           }
 
@@ -543,7 +543,7 @@ export function usePDFTools() {
 
       downloadBlob(zipBlob, zipFilename);
     } catch (error) {
-      console.error('Error converting to images:', error);
+      // console.error('Error converting to images:', error);
       throw error;
     } finally {
       isProcessing.value = false;

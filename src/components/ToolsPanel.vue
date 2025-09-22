@@ -537,7 +537,7 @@ const handleConvertToImages = async () => {
       emit('progress', progress, step);
     });
   } catch (error) {
-    console.error('Error converting to images:', error);
+    // console.error('Error converting to images:', error);
   }
 };
 
@@ -563,7 +563,7 @@ const handleInsertPDF = async () => {
 
     props.downloadBlob(resultBlob, filename);
   } catch (error) {
-    console.error('Error inserting PDF:', error);
+    // console.error('Error inserting PDF:', error);
   }
 };
 </script>

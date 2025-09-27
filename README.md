@@ -13,3 +13,13 @@ A free online PDF editor that allows you to merge, split, and edit PDF files wit
 - Remove specific pages from PDF files
 
 Access the tool at [https://pdfrizz.knoctal.com/](https://pdfrizz.knoctal.com/)
+
+## Previews
+
+### Main Interface
+
+![PdfRizz Main Interface](public/imgs/pdfrizz-preview-main.png)
+
+### Tools Panel
+
+![PdfRizz Tools Panel](public/imgs/pdfrizz-preview-tools.png)

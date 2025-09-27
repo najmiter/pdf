@@ -22,7 +22,7 @@
 
     <!-- Memory limit reached message -->
     <div
-      v-if="visiblePages.length >= maxRenderedPages && hasMorePages"
+      v-if="visiblePages.length >= maxRenderedPages.value && hasMorePages"
       class="flex items-center justify-center w-full py-8">
       <div class="flex flex-col items-center space-y-2 text-muted-foreground">
         <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -68,16 +68,27 @@ defineEmits<{
 const containerRef = ref<HTMLElement>();
 const sentinelRef = ref<HTMLElement>();
 const visiblePages = ref<PageInfo[]>([]);
-const batchSize = 20;
-const maxRenderedPages = 100;
+const batchSize = computed(() => {
+  if (props.totalPages > 2000) return 5;
+  if (props.totalPages > 1000) return 8;
+  if (props.totalPages > 500) return 10;
+  return 15;
+});
+
+const maxRenderedPages = computed(() => {
+  if (props.totalPages > 2000) return 25;
+  if (props.totalPages > 1000) return 40;
+  if (props.totalPages > 500) return 50;
+  return 75;
+});
 const loadedBatches = ref<Set<number>>(new Set());
 const isLoadingMore = ref(false);
 let scrollTimeout: number | null = null;
 let intersectionObserver: IntersectionObserver | null = null;
 
 const hasMorePages = computed(() => {
-  const totalBatches = Math.ceil(props.totalPages / batchSize);
-  const reachedMaxRendered = visiblePages.value.length >= maxRenderedPages;
+  const totalBatches = Math.ceil(props.totalPages / batchSize.value);
+  const reachedMaxRendered = visiblePages.value.length >= maxRenderedPages.value;
   return loadedBatches.value.size < totalBatches && !reachedMaxRendered;
 });
 
@@ -112,7 +123,7 @@ const setupIntersectionObserver = () => {
 const loadBatch = async (batchIndex: number) => {
   if (loadedBatches.value.has(batchIndex)) return;
 
-  if (visiblePages.value.length >= maxRenderedPages) {
+  if (visiblePages.value.length >= maxRenderedPages.value) {
     return;
   }
 
@@ -120,9 +131,9 @@ const loadBatch = async (batchIndex: number) => {
     isLoadingMore.value = true;
   }
 
-  const startPage = batchIndex * batchSize + 1;
-  const endPage = Math.min(props.totalPages, (batchIndex + 1) * batchSize);
-  const remainingCapacity = maxRenderedPages - visiblePages.value.length;
+  const startPage = batchIndex * batchSize.value + 1;
+  const endPage = Math.min(props.totalPages, (batchIndex + 1) * batchSize.value);
+  const remainingCapacity = maxRenderedPages.value - visiblePages.value.length;
   const actualEndPage = Math.min(endPage, startPage + remainingCapacity - 1);
 
   const newPages: PageInfo[] = [];
@@ -148,7 +159,7 @@ const loadBatch = async (batchIndex: number) => {
 
 onMounted(() => {
   if (props.totalPages <= 50) {
-    for (let batch = 0; batch < Math.ceil(props.totalPages / batchSize); batch++) {
+    for (let batch = 0; batch < Math.ceil(props.totalPages / batchSize.value); batch++) {
       loadBatch(batch);
     }
   } else {

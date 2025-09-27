@@ -148,7 +148,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch, computed, defineAsyncComponent } from 'vue';
+import { onMounted, onUnmounted, ref, watch, computed, defineAsyncComponent } from 'vue';
 import { Icon } from '@iconify/vue';
 import { usePDFTools, type PDFFile } from '@/composables/usePDFTools';
 import { useDarkMode } from '@/composables/useDarkMode';
@@ -177,6 +177,7 @@ const {
   insertPDF,
   convertToImages,
   downloadBlob,
+  cleanup,
 } = usePDFTools();
 
 const { isDark, toggleDarkMode } = useDarkMode();
@@ -201,6 +202,10 @@ onMounted(async () => {
     const data = await response.json();
     repoStarsCount.value = Intl.NumberFormat('en-us', { notation: 'compact' }).format(data.stargazers_count);
   } catch {}
+});
+
+onUnmounted(() => {
+  cleanup();
 });
 
 watch(

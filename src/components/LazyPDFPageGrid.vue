@@ -22,7 +22,7 @@
 
     <!-- Memory limit reached message -->
     <div
-      v-if="visiblePages.length >= maxRenderedPages.value && hasMorePages"
+      v-if="visiblePages.length >= maxRenderedPages.valueOf() && hasMorePages"
       class="flex items-center justify-center w-full py-8">
       <div class="flex flex-col items-center space-y-2 text-muted-foreground">
         <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">

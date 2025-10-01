@@ -11,6 +11,10 @@ const routes = [
     name: 'Compress',
     component: () => import('@/pages/CompressPage.vue'),
   },
+  {
+    path: '/:pathMatch(.*)*',
+    redirect: '/',
+  },
 ];
 
 const router = createRouter({

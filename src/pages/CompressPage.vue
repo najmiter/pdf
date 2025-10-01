@@ -54,21 +54,21 @@
                     size="sm"
                     :class="currentPreset === 'light' ? 'bg-primary/20 border-primary' : ''"
                     @click="applyPreset('light')"
-                    >> Light
+                    >&gt; Light
                   </Button>
                   <Button
                     variant="soft"
                     size="sm"
                     :class="currentPreset === 'medium' ? 'bg-primary/20 border-primary' : ''"
                     @click="applyPreset('medium')"
-                    >> Medium
+                    >&gt; Medium
                   </Button>
                   <Button
                     variant="soft"
                     size="sm"
                     :class="currentPreset === 'aggressive' ? 'bg-primary/20 border-primary' : ''"
                     @click="applyPreset('aggressive')"
-                    >> Aggressive
+                    >&gt; Aggressive
                   </Button>
                 </div>
               </div>

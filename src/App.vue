@@ -14,15 +14,13 @@
             <router-link
               to="/"
               class="md:px-4 px-2 py-2 rounded-lg text-sm font-medium transition-colors hover:text-primary"
-              :class="$route.name === 'Home' ? 'text-primary' : ''">
-              <Icon icon="lucide:file-text" class="h-4 w-4 inline mr-2" />
-              PDF Tools
+              :class="$route.name === 'Home' ? 'text-primary font-bold' : ''">
+              Home
             </router-link>
             <router-link
               to="/compress"
               class="md:px-4 px-2 py-2 rounded-lg text-sm font-medium transition-colors hover:text-primary"
-              :class="$route.name === 'Compress' ? 'text-primary' : ''">
-              <Icon icon="lucide:zap" class="h-4 w-4 inline mr-2" />
+              :class="$route.name === 'Compress' ? 'text-primary font-bold' : ''">
               Compress
             </router-link>
           </nav>
@@ -31,6 +29,7 @@
             <div class="flex gap-2 items-center">
               <a
                 v-if="repoStarsCount"
+                class="hidden sm:inline-block"
                 title="Star this project on GitHub"
                 href="https://github.com/najmiter/pdf"
                 target="_blank">

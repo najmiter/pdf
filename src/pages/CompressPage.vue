@@ -271,7 +271,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, defineAsyncComponent } from 'vue';
+import { ref, computed, defineAsyncComponent, onMounted, onUnmounted } from 'vue';
 import { Icon } from '@iconify/vue';
 import { usePDFCompression, type CompressionSettings } from '@/composables/usePDFCompression';
 import DropZone from '@/components/DropZone.vue';
@@ -305,7 +305,6 @@ const currentPreset = ref<'light' | 'medium' | 'aggressive' | 'custom'>('medium'
 
 const compressionSettings = ref<CompressionSettings>({ ...defaultSettings });
 
-// File size formatting
 const formatFileSize = (bytes: number): string => {
   if (bytes === 0) return '0 Bytes';
   const k = 1024;
@@ -314,7 +313,6 @@ const formatFileSize = (bytes: number): string => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
 
-// Estimated compression calculations
 const estimatedSize = computed(() => {
   if (!selectedFile.value) return '0 KB';
   const estimatedBytes = selectedFile.value.size * (1 - estimatedReduction.value / 100);
@@ -331,7 +329,6 @@ const estimatedReduction = computed(() => {
   return Math.min(80, Math.round(qualityFactor + metadataFactor + imageFactor + objectFactor + annotationFactor));
 });
 
-// Drag and drop handlers
 const handleDragEnter = (event: DragEvent) => {
   event.preventDefault();
   dragCounter.value++;
@@ -365,7 +362,6 @@ const handleDrop = async (event: DragEvent) => {
   }
 };
 
-// File selection handlers
 const handleFileSelected = (fileList: FileList | File[]) => {
   const files = Array.from(fileList);
   const pdfFiles = files.filter((file) => file.type === 'application/pdf');
@@ -381,13 +377,11 @@ const handleFileInput = (e: Event) => {
   }
 };
 
-// Preset handling
 const applyPreset = (preset: 'light' | 'medium' | 'aggressive') => {
   currentPreset.value = preset;
   compressionSettings.value = { ...getCompressionPreset(preset) };
 };
 
-// Actions
 const resetSelection = () => {
   selectedFile.value = null;
   resetCompression();
@@ -415,6 +409,14 @@ const compressAnother = () => {
   resetSelection();
 };
 
-// Initialize with medium preset
+const originalTitle = document.title;
+onMounted(() => {
+  document.title = 'Compress PDF – PdfRizz';
+});
+
+onUnmounted(() => {
+  document.title = originalTitle;
+});
+
 applyPreset('medium');
 </script>

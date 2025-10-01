@@ -10,6 +10,7 @@ export interface CompressionSettings {
   optimizeImages: boolean;
   removeUnusedObjects: boolean;
   linearize: boolean; // Fast web view
+  useObjectStreams: boolean;
 }
 
 export interface CompressionResult {
@@ -121,6 +122,7 @@ export function usePDFCompression() {
     optimizeImages: true,
     removeUnusedObjects: true,
     linearize: true,
+    useObjectStreams: true,
   };
 
   const compressedSizeReduction = computed(() => {

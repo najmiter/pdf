@@ -1,6 +1,6 @@
 import { ref, computed } from 'vue';
 import { PDFDocument, degrees } from 'pdf-lib';
-import * as JSZip from 'jszip';
+import JSZip from 'jszip';
 
 let pdfjsLib: any = null;
 const getPdfjsLib = async () => {
@@ -22,7 +22,7 @@ export interface PDFFile {
   thumbnail?: string;
 }
 
-class PDFMemoryManager {
+export class PDFMemoryManager {
   private static instance: PDFMemoryManager;
   private pdfDocuments: Map<string, any> = new Map();
   private objectUrls: Set<string> = new Set();
@@ -139,7 +139,7 @@ export function usePDFTools() {
     targetPdf: any,
     pageIndices: number[],
     pageCount: number,
-    onPageProcess?: (page: any, index: number) => void
+    onPageProcess?: (page: any, index: number) => void,
   ) => {
     if (!pageIndices.length) return;
 
@@ -173,17 +173,6 @@ export function usePDFTools() {
   };
 
   const totalPages = computed(() => files.value.reduce((sum, file) => sum + file.pages, 0));
-
-  const getGlobalPageIndex = (fileId: string, pageNumber: number): number => {
-    let globalIndex = 0;
-    for (const file of files.value) {
-      if (file.id === fileId) {
-        return globalIndex + pageNumber;
-      }
-      globalIndex += file.pages;
-    }
-    return globalIndex;
-  };
 
   const parsePageRange = (range: string): PageRange[] => {
     const ranges: PageRange[] = [];
@@ -280,25 +269,11 @@ export function usePDFTools() {
 
     const mergedPdf = await PDFDocument.create();
     let processedPages = 0;
-    let totalPages = 0;
-    for (const fileId of selectedFileIds) {
-      const file = files.value.find((f) => f.id === fileId);
-      if (file) {
-        const fileGlobalIndices = new Set<number>();
-        for (let pageNum = 1; pageNum <= file.pages; pageNum++) {
-          const globalIndex = getGlobalPageIndex(fileId, pageNum);
-          if (selectedPages.value.has(globalIndex)) {
-            fileGlobalIndices.add(pageNum);
-          }
-        }
 
-        if (fileGlobalIndices.size > 0) {
-          totalPages += fileGlobalIndices.size;
-        } else {
-          totalPages += file.pages;
-        }
-      }
-    }
+    const totalPages = selectedFileIds.reduce((sum, id) => {
+      const file = files.value.find((f) => f.id === id);
+      return sum + (file ? file.pages : 0);
+    }, 0);
 
     for (const fileId of selectedFileIds) {
       const file = files.value.find((f) => f.id === fileId);
@@ -307,26 +282,14 @@ export function usePDFTools() {
 
         const arrayBuffer = await getArrayBuffer(file);
         const doc = await PDFDocument.load(arrayBuffer);
-
-        const selectedPageNumbers: number[] = [];
-        for (let pageNum = 1; pageNum <= file.pages; pageNum++) {
-          const globalIndex = getGlobalPageIndex(fileId, pageNum);
-          if (selectedPages.value.has(globalIndex)) {
-            selectedPageNumbers.push(pageNum - 1);
-          }
-        }
-
-        let pageIndices: number[];
-        if (selectedPageNumbers.length > 0) {
-          pageIndices = selectedPageNumbers;
-        } else {
-          pageIndices = doc.getPageIndices();
-        }
+        const pageIndices = doc.getPageIndices();
 
         await processBatch(doc, mergedPdf, pageIndices, totalPages);
         processedPages += pageIndices.length;
-        const progress = (processedPages / totalPages) * 90;
-        processingProgress.value = progress;
+        if (totalPages > 0) {
+          const progress = (processedPages / totalPages) * 90;
+          processingProgress.value = progress;
+        }
       }
     }
 
@@ -432,7 +395,7 @@ export function usePDFTools() {
     originalFileId: string,
     insertFileId: string,
     insertAtPage: number,
-    ranges?: PageRange[]
+    ranges?: PageRange[],
   ): Promise<Blob> => {
     startProcessing('insert', 'Preparing files...');
 
@@ -479,7 +442,7 @@ export function usePDFTools() {
 
     const secondHalfIndices = Array.from(
       { length: originalFile.pages - insertAtPage + 1 },
-      (_, i) => insertAtPage - 1 + i
+      (_, i) => insertAtPage - 1 + i,
     );
     if (secondHalfIndices.length > 0) {
       await processBatch(originalDoc, mergedPdf, secondHalfIndices, originalFile.pages);
@@ -493,14 +456,14 @@ export function usePDFTools() {
   const convertToImages = async (
     format: 'png' | 'jpeg' = 'png',
     quality: number = 1.0,
-    onProgress?: (progress: number, currentStep: string) => void
+    onProgress?: (progress: number, currentStep: string) => void,
   ): Promise<void> => {
     if (selectedPages.value.size === 0) return;
 
     startProcessing('convert', 'Preparing conversion...');
 
     try {
-      const zip = new JSZip.default();
+      const zip = new JSZip();
 
       let globalIndex = 1;
       let processedPages = 0;
@@ -516,8 +479,7 @@ export function usePDFTools() {
         }
 
         if (filePages.length > 0) {
-          const lib = await getPdfjsLib();
-          const pdf = await lib.getDocument(file.url).promise;
+          const pdf = memoryManager.getDocument(file.id);
 
           for (const pageNum of filePages) {
             try {
@@ -551,7 +513,7 @@ export function usePDFTools() {
                     else reject(new Error('Failed to create blob'));
                   },
                   format === 'jpeg' ? 'image/jpeg' : 'image/png',
-                  quality
+                  quality,
                 );
               });
 

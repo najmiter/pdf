@@ -73,17 +73,15 @@ const containerRef = ref<HTMLElement>();
 const sentinelRef = ref<HTMLElement>();
 const visiblePages = ref<PageInfo[]>([]);
 const batchSize = computed(() => {
-  if (props.totalPages > 2000) return 5;
-  if (props.totalPages > 1000) return 8;
-  if (props.totalPages > 500) return 10;
-  return 15;
+  if (props.totalPages > 1000) return 15;
+  if (props.totalPages > 500) return 20;
+  return 30;
 });
 
 const maxRenderedPages = computed(() => {
-  if (props.totalPages > 2000) return 25;
-  if (props.totalPages > 1000) return 40;
-  if (props.totalPages > 500) return 50;
-  return 75;
+  if (props.totalPages > 1000) return 300;
+  if (props.totalPages > 500) return 400;
+  return 500;
 });
 const loadedBatches = ref<Set<number>>(new Set());
 const isLoadingMore = ref(false);

@@ -32,7 +32,7 @@
       <!-- PDF Page Preview -->
       <div class="w-full h-full flex items-center justify-center p-2" @contextmenu.prevent>
         <VPdf
-          :source="pdfUrl"
+          :source="pdfDoc || pdfUrl"
           :page="pageNumber"
           :scale="0.8"
           :width="220"
@@ -92,6 +92,7 @@ interface Props {
   pageNumber: number;
   fileName: string;
   pdfUrl: string;
+  pdfDoc?: any;
   isSelected?: boolean;
   class?: string;
 }
@@ -106,7 +107,7 @@ const isLoading = ref(true);
 const hasError = ref(false);
 
 watch(
-  () => [props.pdfUrl, props.pageNumber],
+  () => [props.pdfDoc || props.pdfUrl, props.pageNumber],
   () => {
     isLoading.value = true;
     hasError.value = false;

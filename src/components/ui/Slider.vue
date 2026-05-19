@@ -77,7 +77,6 @@ const handleInput = (event: Event) => {
   border-radius: 50%;
   background: oklch(81.329% 0.12994 60.273);
   cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   border: 2px solid rgb(113, 113, 113);
   z-index: 5;
   position: relative;
@@ -89,7 +88,6 @@ const handleInput = (event: Event) => {
   border-radius: 50%;
   background: hsl(var(--primary));
   cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   border: 2px solid white;
 }
 

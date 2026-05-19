@@ -13,14 +13,14 @@
     <div class="aspect-[3/4] rounded-t-lg overflow-hidden relative">
       <!-- Page Number Badge -->
       <div
-        class="absolute top-2 left-2 bg-foreground/30 backdrop-blur-3xl text-white text-xs font-medium px-2 py-1 rounded-md z-10 shadow-sm">
+        class="absolute top-2 left-2 bg-muted text-foreground text-xs font-medium px-2 py-1 rounded-md z-10 border border-border">
         {{ pageNumber }}
       </div>
 
       <!-- Selection Indicator -->
       <div
         v-if="isSelected"
-        class="absolute top-2 right-2 bg-green-500 text-background text-xs p-1 rounded-full z-10 shadow-sm flex items-center justify-center">
+        class="absolute top-2 right-2 bg-green-500 text-background text-xs p-1 rounded-full z-10 flex items-center justify-center">
         <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
           <path
             fill-rule="evenodd"
@@ -36,7 +36,7 @@
           :page="pageNumber"
           :scale="0.8"
           :width="220"
-          class="rounded-lg max-w-60 max-h-74 overflow-hidden grid place-content-center w-fit shadow-sm"
+          class="rounded-lg max-w-60 max-h-74 overflow-hidden grid place-content-center w-fit border border-border"
           @rendering="isLoading = true"
           @rendered="isLoading = false"
           @error="hasError = true" />
@@ -71,7 +71,7 @@
     </div>
 
     <!-- Page Info -->
-    <div class="p-3 space-y-1 border-t border-t-foreground/10">
+    <div class="p-3 space-y-1 border-t border-border">
       <div class="text-sm font-medium text-foreground truncate" :title="`Page ${pageNumber}`">
         Page {{ pageNumber }}
       </div>

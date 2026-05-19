@@ -6,6 +6,7 @@
     "paths": {
       "@/*": ["./src/*"]
     },
+    "lib": ["ESNext", "DOM"],
 
     /* Linting */
     "strict": true,

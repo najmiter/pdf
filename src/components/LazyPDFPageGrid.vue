@@ -6,6 +6,7 @@
       :pageNumber="page.pageNumber"
       :fileName="fileName"
       :pdfUrl="pdfUrl"
+      :pdfDoc="pdfDoc"
       :isSelected="page.isSelected"
       @select="() => $emit('select', page.pageNumber)" />
 
@@ -44,6 +45,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, computed, nextTick } from 'vue';
 import PDFPagePreview from './PDFPagePreview.vue';
+import { PDFMemoryManager } from '@/composables/usePDFTools';
 
 interface PageInfo {
   pageNumber: number;
@@ -60,6 +62,8 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+
+const pdfDoc = computed(() => PDFMemoryManager.getInstance().getDocument(props.fileId));
 
 defineEmits<{
   select: [pageNumber: number];

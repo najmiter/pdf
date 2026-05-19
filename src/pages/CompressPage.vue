@@ -224,7 +224,7 @@
           </div>
 
           <!-- Reduction Stats -->
-          <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
+          <div v-if="compressedSizeReduction > 0" class="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
             <div class="flex items-center justify-between mb-2">
               <span class="text-sm font-medium text-green-800 dark:text-green-200">Size Reduction</span>
               <span class="text-lg font-bold text-green-600 dark:text-green-400">
@@ -235,6 +235,17 @@
               <div
                 class="bg-green-500 h-2 rounded-full transition-all duration-500"
                 :style="{ width: `${compressedSizeReduction}%` }"></div>
+            </div>
+          </div>
+          <div v-else class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+            <div class="flex items-start space-x-2">
+              <Icon icon="lucide:info" class="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5" />
+              <div>
+                <h4 class="text-sm font-medium text-yellow-800 dark:text-yellow-200">Already Optimized</h4>
+                <p class="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+                  This PDF is already highly optimized. We couldn't reduce its size further using structure compression.
+                </p>
+              </div>
             </div>
           </div>
         </div>

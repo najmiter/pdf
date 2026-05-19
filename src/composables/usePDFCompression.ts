@@ -1,5 +1,5 @@
 import { ref, computed } from 'vue';
-import { PDFDocument } from 'pdf-lib';
+import { PDFDocument, PDFName, type SaveOptions } from 'pdf-lib';
 
 export interface CompressionSettings {
   quality: number; // 0.1 to 1.0
@@ -34,7 +34,7 @@ class PDFCompressionManager {
   async compressPDF(
     file: File,
     settings: CompressionSettings,
-    onProgress?: (progress: number, step: string) => void
+    onProgress?: (progress: number, step: string) => void,
   ): Promise<CompressionResult> {
     const originalSize = file.size;
 
@@ -59,19 +59,27 @@ class PDFCompressionManager {
         pdfDoc.setCreator('');
         pdfDoc.setCreationDate(new Date(0));
         pdfDoc.setModificationDate(new Date(0));
+        pdfDoc.catalog.delete(PDFName.of('Metadata'));
       }
 
       // Remove bookmarks if requested
       if (settings.removeBookmarks) {
-        // pdf-lib doesn't have direct bookmark removal API
-        // This would require more advanced PDF manipulation
+        pdfDoc.catalog.delete(PDFName.of('Outlines'));
+      }
+
+      // Remove annotations if requested
+      if (settings.removeAnnotations) {
+        const pages = pdfDoc.getPages();
+        for (const page of pages) {
+          page.node.delete(PDFName.of('Annots'));
+        }
       }
 
       onProgress?.(70, 'Optimizing PDF structure...');
 
       // Save with compression options
-      const saveOptions: any = {
-        useObjectStreams: settings.removeUnusedObjects,
+      const saveOptions: SaveOptions = {
+        useObjectStreams: settings.useObjectStreams,
         addDefaultPage: false,
         objectsPerTick: settings.linearize ? 50 : 20,
       };
@@ -82,7 +90,7 @@ class PDFCompressionManager {
 
       const compressedBlob = new Blob([new Uint8Array(compressedBytes)], { type: 'application/pdf' });
       const compressedSize = compressedBlob.size;
-      const compressionRatio = ((originalSize - compressedSize) / originalSize) * 100;
+      const compressionRatio = Math.max(0, ((originalSize - compressedSize) / originalSize) * 100);
 
       onProgress?.(100, 'Compression complete!');
 
@@ -142,7 +150,7 @@ export function usePDFCompression() {
 
   const compressPDF = async (
     file: File,
-    settings: CompressionSettings = defaultSettings
+    settings: CompressionSettings = defaultSettings,
   ): Promise<CompressionResult | null> => {
     try {
       isCompressing.value = true;

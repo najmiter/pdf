@@ -5,6 +5,7 @@ import { fileURLToPath, URL } from 'node:url';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
+  base: '/',
   plugins: [
     tailwindcss(),
     vue(),

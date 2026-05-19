@@ -60,7 +60,7 @@
   --accent: oklch(60.825% 0.20898 27.013);
   --accent-foreground: oklch(81.329% 0.12994 60.273);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(81.329% 0.12994 60.273);
+  --border: oklch(1 0 0 / 10%);
   --input: oklch(81.329% 0.12994 60.273);
   --ring: oklch(0.708 0 0);
   --chart-1: oklch(0.646 0.222 41.116);
@@ -116,6 +116,7 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
     font-family: 'Geist', sans-serif;

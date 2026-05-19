@@ -73,6 +73,18 @@
           </div>
         </Button>
 
+        <router-link to="/compress" class="block">
+          <Button type="button" aria-label="Compress PDF" variant="soft" class="w-full justify-start p-3 h-auto">
+            <div class="flex items-center space-x-3">
+              <Icon icon="lucide:zap" class="h-5 w-5 text-primary" />
+              <div class="text-left">
+                <div class="font-medium">Compress PDF</div>
+                <div class="text-xs text-muted-foreground">Reduce PDF file size</div>
+              </div>
+            </div>
+          </Button>
+        </router-link>
+
         <Button
           type="button"
           aria-label="Insert PDF"

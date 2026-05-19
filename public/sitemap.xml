@@ -1,10 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset 
-  xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" 
-  xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url>
     <loc>https://pdfrizz.knoctal.com/</loc>
-    <lastmod>2025-10-01T09:21:30.585Z</lastmod>
+    <lastmod>2026-05-19T09:21:30.585Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
     <image:image>
@@ -13,7 +11,7 @@
   </url>
   <url>
     <loc>https://pdfrizz.knoctal.com/compress</loc>
-    <lastmod>2025-10-01T09:21:30.585Z</lastmod>
+    <lastmod>2026-05-19T09:21:30.585Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>

@@ -3,7 +3,7 @@
     ref="cardRef"
     :class="[
       'relative p-4 bg-muted/50 rounded-lg border-2 transition-all duration-200 cursor-move',
-      isDragging ? 'border-primary shadow-lg scale-105' : 'border-transparent hover:border-muted-foreground/20',
+      isDragging ? 'border-primary bg-primary/5 scale-[1.01]' : 'border-transparent hover:border-muted-foreground/20',
       isDragOver ? 'border-dashed border-primary bg-primary/5' : '',
     ]"
     draggable="true"
@@ -28,7 +28,7 @@
     </div>
 
     <!-- Action Buttons -->
-    <div class="flex items-center justify-between mt-3 pt-3 border-t border-t-foreground/10">
+    <div class="flex items-center justify-between mt-3 pt-3 border-t border-border">
       <div class="flex items-center space-x-2">
         <!-- Preview Toggle Button -->
         <Button variant="soft" size="sm" @click.stop="togglePreview" class="h-8 px-2">

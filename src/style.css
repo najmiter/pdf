@@ -40,7 +40,6 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  --font-main: 'Jersey 10', sans-serif;
 }
 
 :root {
@@ -120,12 +119,5 @@
   body {
     @apply bg-background text-foreground;
     font-family: 'Geist', sans-serif;
-  }
-}
-
-@layer utilities {
-  .main-theme {
-    font-family: 'Jersey 10 Charted', sans-serif;
-    font-style: normal;
   }
 }

@@ -6,6 +6,7 @@
       :pageNumber="page.pageNumber"
       :fileName="fileName"
       :pdfUrl="pdfUrl"
+      :pdfDoc="pdfDoc"
       :isSelected="page.isSelected"
       @select="() => $emit('select', page.pageNumber)" />
 
@@ -44,6 +45,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, computed, nextTick } from 'vue';
 import PDFPagePreview from './PDFPagePreview.vue';
+import { PDFMemoryManager } from '@/composables/usePDFTools';
 
 interface PageInfo {
   pageNumber: number;
@@ -61,6 +63,8 @@ interface Props {
 
 const props = defineProps<Props>();
 
+const pdfDoc = computed(() => PDFMemoryManager.getInstance().getDocument(props.fileId));
+
 defineEmits<{
   select: [pageNumber: number];
 }>();
@@ -69,17 +73,15 @@ const containerRef = ref<HTMLElement>();
 const sentinelRef = ref<HTMLElement>();
 const visiblePages = ref<PageInfo[]>([]);
 const batchSize = computed(() => {
-  if (props.totalPages > 2000) return 5;
-  if (props.totalPages > 1000) return 8;
-  if (props.totalPages > 500) return 10;
-  return 15;
+  if (props.totalPages > 1000) return 15;
+  if (props.totalPages > 500) return 20;
+  return 30;
 });
 
 const maxRenderedPages = computed(() => {
-  if (props.totalPages > 2000) return 25;
-  if (props.totalPages > 1000) return 40;
-  if (props.totalPages > 500) return 50;
-  return 75;
+  if (props.totalPages > 1000) return 300;
+  if (props.totalPages > 500) return 400;
+  return 500;
 });
 const loadedBatches = ref<Set<number>>(new Set());
 const isLoadingMore = ref(false);

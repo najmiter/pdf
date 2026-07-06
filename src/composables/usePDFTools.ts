@@ -569,11 +569,15 @@ export function usePDFTools() {
               );
             });
 
+            page.cleanup();
+
             const filename = `${file.name.replace(/\.pdf$/i, '')}_page_${pageNum}.${format}`;
+            // zip.file() only stores a reference — the image blobs themselves
+            // are browser-managed and can be paged to disk, unlike raw arrays
             zip.file(filename, blob);
             processedPages++;
 
-            const progress = (processedPages / totalPages) * 100;
+            const progress = (processedPages / totalPages) * 90;
             const currentStep = `Processing page ${processedPages} of ${totalPages}`;
             onProgress?.(progress, currentStep);
             processingProgress.value = progress;
@@ -586,18 +590,44 @@ export function usePDFTools() {
         }
       }
 
-      onProgress?.(95, 'Generating ZIP file...');
-      processingProgress.value = 95;
+      onProgress?.(90, 'Generating ZIP file...');
+      processingProgress.value = 90;
       processingStep.value = 'Generating ZIP file...';
 
-      const zipBlob = await zip.generateAsync({ type: 'blob' });
-      const zipFilename = `pdf_images_${processedPages}_pages.zip`;
+      // stream the archive instead of building it in RAM: consolidate output
+      // chunks into disk-backed Blob parts every ~64MB, then stitch them into
+      // one final Blob. Peak JS memory stays bounded no matter the page count.
+      const zipBlob = await new Promise<Blob>((resolve, reject) => {
+        const FLUSH_THRESHOLD = 64 * 1024 * 1024;
+        const parts: Blob[] = [];
+        let chunks: BlobPart[] = [];
+        let buffered = 0;
+
+        zip
+          .generateInternalStream({ type: 'uint8array', compression: 'STORE', streamFiles: true })
+          .on('data', (chunk, meta) => {
+            chunks.push(chunk as BlobPart);
+            buffered += chunk.length;
+            if (buffered >= FLUSH_THRESHOLD) {
+              parts.push(new Blob(chunks));
+              chunks = [];
+              buffered = 0;
+            }
+            processingProgress.value = 90 + (meta.percent / 100) * 10;
+          })
+          .on('error', reject)
+          .on('end', () => {
+            if (chunks.length > 0) parts.push(new Blob(chunks));
+            resolve(new Blob(parts, { type: 'application/zip' }));
+          })
+          .resume();
+      });
 
       onProgress?.(100, 'Download starting...');
       processingProgress.value = 100;
       processingStep.value = 'Download starting...';
 
-      downloadBlob(zipBlob, zipFilename);
+      downloadBlob(zipBlob, `pdf_images_${processedPages}_pages.zip`);
     } finally {
       canvas.width = 0;
       canvas.height = 0;

@@ -49,10 +49,14 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
+        // Keep each heavy library in its own lazy chunk so it only downloads
+        // when the matching dynamic import actually runs
         manualChunks: {
-          'pdf-vendor': ['pdfjs-dist', 'pdf-lib', 'vue-pdf-embed'],
+          pdfjs: ['pdfjs-dist', 'vue-pdf-embed'],
+          'pdf-lib': ['pdf-lib'],
+          jszip: ['jszip'],
           'ui-vendor': ['@iconify/vue', 'lucide-vue-next', 'radix-vue'],
-          'utils-vendor': ['jszip', '@vueuse/core', 'class-variance-authority', 'clsx', 'tailwind-merge'],
+          'utils-vendor': ['@vueuse/core', 'class-variance-authority', 'clsx', 'tailwind-merge'],
         },
       },
     },

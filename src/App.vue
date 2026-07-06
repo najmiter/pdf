@@ -10,7 +10,7 @@
               class="grid h-8 w-8 place-content-center rounded-lg bg-primary/15 ring-1 ring-primary/25 transition-transform duration-300 group-hover:scale-105">
               <img src="/icon.svg" width="18" height="18" alt="pdf tools logo" />
             </div>
-            <h1 class="text-lg font-semibold tracking-tight">Pdf<span class="text-primary">Rizz</span></h1>
+            <span class="text-lg font-semibold tracking-tight">Pdf<span class="text-primary">Rizz</span></span>
           </router-link>
 
           <!-- Navigation -->

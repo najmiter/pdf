@@ -278,7 +278,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, defineAsyncComponent, onMounted, onUnmounted } from 'vue';
+import { ref, computed, defineAsyncComponent } from 'vue';
 import { Icon } from '@iconify/vue';
 import { usePDFCompression, type CompressionSettings } from '@/composables/usePDFCompression';
 import DropZone from '@/components/DropZone.vue';
@@ -415,15 +415,6 @@ const downloadFile = () => {
 const compressAnother = () => {
   resetSelection();
 };
-
-const originalTitle = document.title;
-onMounted(() => {
-  document.title = 'Compress PDF – PdfRizz';
-});
-
-onUnmounted(() => {
-  document.title = originalTitle;
-});
 
 applyPreset('medium');
 </script>

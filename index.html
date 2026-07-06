@@ -7,6 +7,8 @@
     <meta name="robots" content="index, follow" />
     <meta name="theme-color" content="#FFAD66" />
     <meta name="msapplication-TileColor" content="#FFAD66" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="application-name" content="PdfRizz" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="PDF Rizz" />
@@ -22,6 +24,7 @@
       content="PDF, merge, split, edit, insert pdf, tool, online, free, editor, remove pages, compress, rotate, watermark" />
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
+    <meta property="og:locale" content="en_US" />
     <meta property="og:url" content="https://pdfrizz.knoctal.com/" />
     <meta property="og:title" content="PdfRizz – PDF Tools: Merge, Split, Insert, and Edit PDFs Free Online" />
     <meta
@@ -50,33 +53,53 @@
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "website",
+        "@type": "WebSite",
         "name": "PdfRizz",
-        "url": "https://pdfrizz.knoctal.com",
-        "potentialAction": [
-          {
-            "@type": "TryAction",
-            "target": "https://pdfrizz.knoctal.com/"
-          }
-        ]
+        "alternateName": "PdfRizz PDF Tools",
+        "url": "https://pdfrizz.knoctal.com/",
+        "description": "Free online PDF tools to merge, split, compress, convert and edit PDF files — processed entirely in your browser."
       }
     </script>
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "website",
+        "@type": "WebApplication",
         "name": "PdfRizz",
-        "url": "https://pdfrizz.knoctal.com",
-        "logo": "https://pdfrizz.knoctal.com/icon.png"
+        "url": "https://pdfrizz.knoctal.com/",
+        "image": "https://pdfrizz.knoctal.com/icon.png",
+        "description": "Free online PDF tools to merge, split, compress, convert and edit PDF files. All processing happens locally in your browser — files never leave your device.",
+        "applicationCategory": "UtilitiesApplication",
+        "operatingSystem": "Any",
+        "browserRequirements": "Requires JavaScript",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "featureList": [
+          "Merge multiple PDF files into one",
+          "Split PDFs and extract pages",
+          "Compress PDF file size",
+          "Convert PDF pages to PNG or JPEG images",
+          "Remove pages from PDFs",
+          "Insert one PDF into another",
+          "100% local processing — no uploads"
+        ]
       }
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Jersey+10&display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap" rel="stylesheet" />
   </head>
   <body class="selection:bg-primary selection:text-primary-foreground">
     <div id="pdfrizz--main"></div>
+    <noscript>
+      <h1>PdfRizz – Free Online PDF Tools</h1>
+      <p>
+        Merge, split, compress, and convert PDF files directly in your browser. PdfRizz requires JavaScript to run —
+        please enable it to use the app. Your files are processed locally and never uploaded to a server.
+      </p>
+    </noscript>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

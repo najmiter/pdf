@@ -1,6 +1,6 @@
 <template>
   <div
-    :class="cn('brand-glow p-8 transition-colors duration-200', props.class)"
+    :class="cn('p-8 transition-colors duration-200', props.class)"
     @dragover.prevent="handleDragOver"
     @dragenter.prevent="handleDragEnter"
     @dragleave.prevent="handleDragLeave"
@@ -23,14 +23,7 @@
             <div
               :class="
                 cn(
-                  'absolute inset-0 rounded-2xl bg-primary/25 blur-xl transition-opacity duration-300',
-                  isDragOver ? 'opacity-100' : 'opacity-0 group-hover:opacity-60'
-                )
-              " />
-            <div
-              :class="
-                cn(
-                  'relative grid h-20 w-20 place-content-center rounded-2xl bg-gradient-to-br from-primary/25 to-primary/5 ring-1 ring-primary/30 transition-transform duration-300',
+                  'relative grid h-20 w-20 place-content-center rounded-2xl bg-primary/15 ring-1 ring-primary/30 transition-transform duration-300',
                   isDragOver ? 'scale-110 -rotate-3' : 'group-hover:scale-105 group-hover:-rotate-2'
                 )
               ">
@@ -62,7 +55,9 @@
       </div>
 
       <!-- Trust hints -->
-      <div class="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-muted-foreground">
+      <div
+        v-if="showHints"
+        class="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-muted-foreground">
         <span class="inline-flex items-center gap-1.5">
           <Icon icon="lucide:shield-check" class="h-3.5 w-3.5 text-primary" />
           Processed locally — files never leave your device
@@ -96,11 +91,13 @@ import Button from '@/components/ui/Button.vue';
 
 interface Props {
   isProcessing?: boolean;
+  showHints?: boolean;
   class?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   isProcessing: false,
+  showHints: true,
 });
 
 const emit = defineEmits<{

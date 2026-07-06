@@ -2,17 +2,52 @@
   <div class="flex h-full">
     <!-- Main Content Area -->
     <main
-      class="flex-1 p-6 overflow-auto"
+      class="flex-1 p-6 pt-0 overflow-auto"
       @dragover.prevent="handleDragOver"
       @dragenter.prevent="handleDragEnter"
       @dragleave.prevent="handleDragLeave"
       @drop.prevent="handleDrop">
-      <!-- Drop Zone (shown when no files) -->
-      <div v-if="files.length === 0" class="h-full flex items-center justify-center">
+      <!-- Hero + Drop Zone (shown when no files) -->
+      <div v-if="files.length === 0" class="flex min-h-full flex-col items-center justify-center py-10">
+        <!-- Hero copy -->
+        <div class="animate-fade-up mb-8 max-w-2xl text-center">
+          <h1 class="text-balance text-4xl font-bold tracking-tight sm:text-5xl">
+            Every PDF tool you need,
+            <span class="text-primary">right in your browser</span>
+          </h1>
+          <p class="mx-auto mt-4 max-w-lg text-pretty text-base text-muted-foreground">
+            Merge, split, compress, convert and rearrange PDFs — free, unlimited, and with zero uploads.
+          </p>
+        </div>
+
         <DropZone
           :isProcessing="isProcessing"
+          :showHints="false"
           @files-selected="handleFilesSelected"
-          class="w-full h-full grid place-content-center" />
+          class="w-full" />
+
+        <!-- Capability grid -->
+        <div class="animate-fade-up mt-10 w-full max-w-3xl" style="animation-delay: 120ms">
+          <div class="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+            <component
+              :is="cap.route ? 'router-link' : 'button'"
+              v-for="cap in capabilities"
+              :key="cap.title"
+              :to="cap.route"
+              type="button"
+              class="group flex cursor-pointer items-center gap-3 rounded-xl border border-border/60 bg-card/60 p-3 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:bg-card hover:shadow-md"
+              @click="cap.route ? undefined : addMoreFiles()">
+              <div
+                class="grid h-9 w-9 shrink-0 place-content-center rounded-lg bg-primary/12 ring-1 ring-primary/20 transition-colors duration-200 group-hover:bg-primary/20">
+                <Icon :icon="cap.icon" class="h-4.5 w-4.5 text-primary" />
+              </div>
+              <div class="min-w-0">
+                <div class="text-sm font-medium">{{ cap.title }}</div>
+                <div class="truncate text-xs text-muted-foreground">{{ cap.description }}</div>
+              </div>
+            </component>
+          </div>
+        </div>
       </div>
 
       <!-- PDF Pages Grid -->
@@ -23,12 +58,7 @@
             <h2 class="text-base font-semibold tracking-tight">
               {{ files.length }} {{ files.length === 1 ? 'file' : 'files' }} loaded
             </h2>
-            <p class="text-xs text-muted-foreground mt-0.5">
-              <span v-if="selectedPages.size > 0" class="font-medium text-primary">
-                {{ selectedPages.size }} {{ selectedPages.size === 1 ? 'page' : 'pages' }} selected
-              </span>
-              <span v-else>Click pages to select them, drag cards to reorder files</span>
-            </p>
+            <p class="text-xs text-muted-foreground mt-0.5">Click pages to select them, drag cards to reorder files</p>
           </div>
           <div class="flex items-center flex-wrap gap-2">
             <Button variant="soft" size="sm" type="button" aria-label="add more files" @click="addMoreFiles">
@@ -44,16 +74,6 @@
               :disabled="files.length === 0">
               <Icon icon="lucide:mouse-pointer-click" class="h-4 w-4" />
               Select All
-            </Button>
-            <Button
-              variant="soft"
-              size="sm"
-              type="button"
-              aria-label="clear page selection"
-              @click="clearPageSelection"
-              :disabled="selectedPages.size === 0">
-              <Icon icon="lucide:x" class="h-4 w-4" />
-              Deselect
             </Button>
             <Button
               variant="soft"
@@ -88,6 +108,32 @@
             @rangeClear="handleRangeClear" />
         </div>
       </div>
+
+      <!-- Floating selection bar -->
+      <Transition name="selection-bar">
+        <div
+          v-if="files.length > 0 && selectedPages.size > 0"
+          class="pointer-events-none fixed inset-x-0 bottom-6 z-30 flex justify-center px-4">
+          <div
+            class="pointer-events-auto flex items-center gap-1 rounded-full border border-border/70 bg-card/95 py-1.5 pl-4 pr-1.5 shadow-lg backdrop-blur-xl">
+            <span class="text-sm font-medium tabular-nums">
+              {{ selectedPages.size }} {{ selectedPages.size === 1 ? 'page' : 'pages' }} selected
+            </span>
+            <div class="mx-2 h-4 w-px bg-border" />
+            <Button variant="ghost" size="sm" class="h-7 rounded-full px-3 text-xs" @click="selectAllPages">
+              Select all
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              class="h-7 rounded-full px-3 text-xs text-muted-foreground"
+              @click="clearPageSelection">
+              <Icon icon="lucide:x" class="h-3.5 w-3.5" />
+              Deselect
+            </Button>
+          </div>
+        </div>
+      </Transition>
     </main>
 
     <!-- Right Sidebar - Tools Panel -->
@@ -140,6 +186,15 @@ const DraggableFileCard = defineAsyncComponent(() => import('@/components/Dragga
 const ToolsPanel = defineAsyncComponent(() => import('@/components/ToolsPanel.vue'));
 const LoadingOverlay = defineAsyncComponent(() => import('@/components/LoadingOverlay.vue'));
 
+const capabilities = [
+  { title: 'Merge', description: 'Combine files into one', icon: 'lucide:file-plus' },
+  { title: 'Split', description: 'Extract pages into new files', icon: 'lucide:scissors' },
+  { title: 'Compress', description: 'Shrink PDF file size', icon: 'lucide:zap', route: '/compress' },
+  { title: 'Convert', description: 'Pages to PNG or JPEG', icon: 'lucide:image' },
+  { title: 'Remove pages', description: 'Delete unwanted pages', icon: 'lucide:trash-2' },
+  { title: 'Insert', description: 'Place one PDF in another', icon: 'lucide:plus' },
+] as { title: string; description: string; icon: string; route?: string }[];
+
 const {
   files,
   selectedPages,
@@ -188,7 +243,7 @@ watch(
       }
     });
   },
-  { deep: true }
+  { deep: true },
 );
 
 const orderedFiles = computed(() => {
@@ -379,3 +434,18 @@ const handleRangeSelect = (pagesToSelect: number[]) => {
 
 const handleRangeClear = () => {};
 </script>
+
+<style scoped>
+.selection-bar-enter-active,
+.selection-bar-leave-active {
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.selection-bar-enter-from,
+.selection-bar-leave-to {
+  opacity: 0;
+  transform: translateY(12px);
+}
+</style>

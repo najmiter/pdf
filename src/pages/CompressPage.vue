@@ -2,17 +2,26 @@
   <div class="flex h-full">
     <!-- Main Content Area -->
     <main
-      class="flex-1 p-6 overflow-auto"
+      class="flex-1 p-6 pt-0 overflow-auto"
       @dragover.prevent="handleDragOver"
       @dragenter.prevent="handleDragEnter"
       @dragleave.prevent="handleDragLeave"
       @drop.prevent="handleDrop">
       <!-- Step 1: File Upload -->
-      <div v-if="!selectedFile && !compressionResult" class="h-full flex items-center justify-center">
-        <DropZone
-          :isProcessing="isCompressing"
-          @files-selected="handleFileSelected"
-          class="w-full h-full grid place-content-center" />
+      <div
+        v-if="!selectedFile && !compressionResult"
+        class="flex min-h-full flex-col items-center justify-center py-10 pt-0">
+        <div class="animate-fade-up mb-8 max-w-xl text-center">
+          <h1 class="text-balance text-4xl font-bold tracking-tight sm:text-5xl">
+            Shrink your PDFs
+            <span class="text-primary">without the upload</span>
+          </h1>
+          <p class="mx-auto mt-4 max-w-md text-pretty text-base text-muted-foreground">
+            Reduce file size with fine-grained control over quality — all processed on your device.
+          </p>
+        </div>
+
+        <DropZone :isProcessing="isCompressing" @files-selected="handleFileSelected" class="w-full" />
       </div>
 
       <!-- Step 2: Compression Settings -->
@@ -93,7 +102,10 @@
                 label="Optimize embedded images"
                 id="optimize-images" />
 
-              <Switch v-model="compressionSettings.removeUnusedObjects" label="Remove unused objects" id="remove-unused" />
+              <Switch
+                v-model="compressionSettings.removeUnusedObjects"
+                label="Remove unused objects"
+                id="remove-unused" />
 
               <Switch v-model="compressionSettings.linearize" label="Linearize for fast web view" id="linearize" />
 
@@ -115,7 +127,9 @@
               <!-- Size Estimation -->
               <div class="grid grid-cols-2 gap-3">
                 <div class="rounded-xl bg-muted/60 p-4 text-center">
-                  <div class="text-xl font-bold tabular-nums tracking-tight">{{ formatFileSize(selectedFile.size) }}</div>
+                  <div class="text-xl font-bold tabular-nums tracking-tight">
+                    {{ formatFileSize(selectedFile.size) }}
+                  </div>
                   <div class="mt-1 text-xs text-muted-foreground">Original</div>
                 </div>
                 <div class="rounded-xl bg-success/10 p-4 text-center ring-1 ring-success/20">
@@ -197,7 +211,9 @@
               <div class="mt-1 text-xs text-muted-foreground">Original</div>
             </div>
             <div class="rounded-xl bg-success/10 p-4 text-center ring-1 ring-success/20">
-              <div class="text-2xl font-bold tabular-nums tracking-tight text-success">{{ compressedSizeFormatted }}</div>
+              <div class="text-2xl font-bold tabular-nums tracking-tight text-success">
+                {{ compressedSizeFormatted }}
+              </div>
               <div class="mt-1 text-xs text-muted-foreground">Compressed</div>
             </div>
           </div>

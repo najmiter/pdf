@@ -6,9 +6,8 @@
       class="fixed pointer-events-none inset-0 z-50 m-4 flex items-center justify-center rounded-3xl border-2 border-dashed border-primary bg-background/85 shadow-[inset_0_0_120px_color-mix(in_oklch,var(--primary)_12%,transparent)] backdrop-blur-md">
       <div class="flex flex-col items-center justify-center space-y-6">
         <div class="relative">
-          <div class="absolute inset-0 rounded-2xl bg-primary/30 blur-2xl" />
           <div
-            class="relative grid h-24 w-24 place-content-center rounded-2xl bg-gradient-to-br from-primary/25 to-primary/5 ring-1 ring-primary/40">
+            class="relative grid h-24 w-24 place-content-center rounded-2xl bg-primary/15 ring-1 ring-primary/40">
             <Icon :icon="icon" class="h-12 w-12 text-primary" />
           </div>
         </div>

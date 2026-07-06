@@ -165,12 +165,6 @@
 }
 
 @layer utilities {
-  /* Soft ambient brand glow for hero surfaces */
-  .brand-glow {
-    background:
-      radial-gradient(ellipse 60% 50% at 50% 0%, color-mix(in oklch, var(--primary) 14%, transparent), transparent 70%);
-  }
-
   .animate-fade-up {
     animation: fade-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
   }

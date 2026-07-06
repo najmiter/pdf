@@ -4,8 +4,10 @@
     :aria-label="`Page ${pageNumber}`"
     :class="
       cn(
-        'relative cursor-pointer max-w-60 bg-transparent transition-all duration-200 min-w-60 group overflow-hidden hover:bg-foreground/5',
-        { 'bg-foreground/10': isSelected },
+        'relative min-w-60 max-w-60 group cursor-pointer overflow-hidden transition-all duration-200',
+        isSelected
+          ? 'border-primary/60 bg-primary/5 shadow-[0_4px_16px_color-mix(in_oklch,var(--primary)_20%,transparent)] ring-2 ring-primary/50'
+          : 'hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md',
         props.class
       )
     "
@@ -13,15 +15,21 @@
     <div class="aspect-[3/4] rounded-t-lg overflow-hidden relative">
       <!-- Page Number Badge -->
       <div
-        class="absolute top-2 left-2 bg-muted text-foreground text-xs font-medium px-2 py-1 rounded-md z-10 border border-border">
+        class="absolute top-2 left-2 z-10 rounded-md border border-border/70 bg-card/90 px-2 py-0.5 text-xs font-semibold tabular-nums shadow-xs backdrop-blur-sm">
         {{ pageNumber }}
       </div>
 
       <!-- Selection Indicator -->
       <div
-        v-if="isSelected"
-        class="absolute top-2 right-2 bg-green-500 text-background text-xs p-1 rounded-full z-10 flex items-center justify-center">
-        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+        :class="
+          cn(
+            'absolute top-2 right-2 z-10 grid h-5.5 w-5.5 place-content-center rounded-full border transition-all duration-200',
+            isSelected
+              ? 'scale-100 border-primary bg-primary text-primary-foreground shadow-sm'
+              : 'scale-90 border-border bg-card/90 opacity-0 backdrop-blur-sm group-hover:opacity-100'
+          )
+        ">
+        <svg class="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
           <path
             fill-rule="evenodd"
             d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
@@ -71,11 +79,9 @@
     </div>
 
     <!-- Page Info -->
-    <div class="p-3 space-y-1 border-t border-border">
-      <div class="text-sm font-medium text-foreground truncate" :title="`Page ${pageNumber}`">
-        Page {{ pageNumber }}
-      </div>
-      <div class="text-xs text-muted-foreground truncate" :title="fileName">
+    <div class="border-t border-border/60 px-3 py-2.5">
+      <div class="truncate text-sm font-medium" :title="`Page ${pageNumber}`">Page {{ pageNumber }}</div>
+      <div class="mt-0.5 truncate text-xs text-muted-foreground" :title="fileName">
         {{ fileName }}
       </div>
     </div>

@@ -2,8 +2,10 @@
   <div
     ref="cardRef"
     :class="[
-      'relative p-4 bg-muted/50 rounded-lg border-2 transition-all duration-200 cursor-move',
-      isDragging ? 'border-primary bg-primary/5 scale-[1.01]' : 'border-transparent hover:border-muted-foreground/20',
+      'relative rounded-2xl border bg-card p-4 shadow-sm transition-all duration-200 cursor-move',
+      isDragging
+        ? 'border-primary/60 bg-primary/5 scale-[1.01] shadow-lg'
+        : 'border-border/70 hover:border-primary/30 hover:shadow-md',
       isDragOver ? 'border-dashed border-primary bg-primary/5' : '',
     ]"
     draggable="true"
@@ -14,77 +16,90 @@
     @drop.prevent="handleDrop">
     <!-- File Info -->
     <div class="flex items-center justify-between gap-4">
-      <div class="flex items-center space-x-3 pr-12">
-        <Icon icon="lucide:file-text" class="h-5 w-5 text-primary flex-shrink-0" />
-        <div class="flex-1 min-w-0">
-          <h3 class="font-medium truncate" :title="file.name">{{ file.name }}</h3>
-          <p class="text-sm text-muted-foreground">{{ file.pages }} pages • {{ formatFileSize(file.size) }}</p>
+      <div class="flex min-w-0 items-center gap-3">
+        <div class="grid h-10 w-10 shrink-0 place-content-center rounded-xl bg-primary/12 ring-1 ring-primary/20">
+          <Icon icon="lucide:file-text" class="h-5 w-5 text-primary" />
+        </div>
+        <div class="min-w-0 flex-1">
+          <h3 class="truncate text-sm font-semibold" :title="file.name">{{ file.name }}</h3>
+          <p class="mt-0.5 text-xs text-muted-foreground">
+            {{ file.pages }} {{ file.pages === 1 ? 'page' : 'pages' }}
+            <span class="mx-1 text-border">•</span>
+            {{ formatFileSize(file.size) }}
+          </p>
         </div>
       </div>
-      <!-- Drag Handle -->
-      <div class="p-2">
-        <Icon icon="lucide:grip-vertical" class="h-4 w-4 text-muted-foreground" />
-      </div>
-    </div>
 
-    <!-- Action Buttons -->
-    <div class="flex items-center justify-between mt-3 pt-3 border-t border-border">
-      <div class="flex items-center space-x-2">
+      <div class="flex shrink-0 items-center gap-1">
         <!-- Preview Toggle Button -->
-        <Button variant="soft" size="sm" @click.stop="togglePreview" class="h-8 px-2">
-          <Icon :icon="showPreview ? 'lucide:eye-off' : 'lucide:eye'" class="h-4 w-4 mr-1" />
-          <span class="text-xs">{{ showPreview ? 'Hide' : 'Show' }} Preview</span>
+        <Button
+          variant="ghost"
+          size="sm"
+          @click.stop="togglePreview"
+          class="h-8 gap-1.5 px-2.5 text-muted-foreground hover:text-foreground"
+          :title="`${showPreview ? 'Hide' : 'Show'} page previews`">
+          <Icon :icon="showPreview ? 'lucide:eye-off' : 'lucide:eye'" class="h-4 w-4" />
+          <span class="hidden text-xs sm:inline">Preview</span>
         </Button>
 
         <!-- Page Range Selector Button -->
-        <Button variant="soft" size="sm" @click.stop="toggleRangeSelector" class="h-8 px-2">
-          <Icon icon="lucide:list" class="h-4 w-4 mr-1" />
-          <span class="text-xs">Select Range</span>
+        <Button
+          variant="ghost"
+          size="sm"
+          @click.stop="toggleRangeSelector"
+          class="h-8 gap-1.5 px-2.5 text-muted-foreground hover:text-foreground"
+          title="Select a range of pages">
+          <Icon icon="lucide:list" class="h-4 w-4" />
+          <span class="hidden text-xs sm:inline">Range</span>
         </Button>
-      </div>
 
-      <!-- Remove Button -->
-      <Button variant="ghost" size="sm" @click.stop="$emit('remove')" class="h-8 w-8 p-0">
-        <Icon icon="lucide:x" class="h-4 w-4" />
-      </Button>
+        <!-- Remove Button -->
+        <Button
+          variant="ghost"
+          size="sm"
+          @click.stop="$emit('remove')"
+          class="h-8 w-8 p-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+          title="Remove file">
+          <Icon icon="lucide:x" class="h-4 w-4" />
+        </Button>
+
+        <!-- Drag Handle -->
+        <div class="p-1.5 text-muted-foreground/50">
+          <Icon icon="lucide:grip-vertical" class="h-4 w-4" />
+        </div>
+      </div>
     </div>
 
     <!-- Page Range Selector -->
-    <div v-if="showRangeSelector" class="mt-3 p-3 border rounded-lg bg-muted/30">
+    <div v-if="showRangeSelector" class="mt-3 rounded-xl border border-border/70 bg-muted/40 p-3 animate-fade-in">
       <div class="space-y-3">
         <div class="flex items-center justify-between">
-          <span class="text-sm font-medium">Select Pages</span>
+          <span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Select page range</span>
           <Button variant="ghost" size="sm" @click="showRangeSelector = false" class="h-6 w-6 p-0">
             <Icon icon="lucide:x" class="h-3 w-3" />
           </Button>
         </div>
 
-        <div class="flex items-start justify-between gap-2">
-          <div class="space-y-2 flex-1">
+        <div class="flex flex-wrap items-start gap-2">
+          <div class="min-w-48 flex-1 space-y-1.5">
             <input
               v-model="rangeInput"
               type="text"
               placeholder="e.g., 1-5,8,10-15"
-              class="w-full px-2 py-1 border border-input bg-background rounded text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+              class="h-9 w-full rounded-lg border border-input bg-card px-3 text-sm shadow-xs transition-colors placeholder:text-muted-foreground/60 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-ring/60"
               @keydown.enter="applyRangeSelection"
               @input="validateRange" />
-            <p class="text-xs text-muted-foreground">Enter page ranges separated by commas (e.g., 1-5,8,10-15)</p>
-            <div v-if="rangeError" class="text-xs text-red-600">
+            <p v-if="rangeError" class="flex items-center gap-1 text-xs text-destructive">
+              <Icon icon="lucide:alert-circle" class="h-3 w-3" />
               {{ rangeError }}
-            </div>
+            </p>
+            <p v-else class="text-xs text-muted-foreground">Comma-separated pages or ranges</p>
           </div>
           <div class="flex gap-2">
-            <Button
-              type="button"
-              @click="applyRangeSelection"
-              :disabled="!rangeInput.trim() || !!rangeError"
-              class="flex-1 text-xs"
-              size="sm">
-              Select Pages
+            <Button type="button" @click="applyRangeSelection" :disabled="!rangeInput.trim() || !!rangeError" size="sm">
+              Select
             </Button>
-            <Button type="button" @click="clearRangeSelection" variant="soft" class="flex-1 text-xs" size="sm">
-              Clear
-            </Button>
+            <Button type="button" @click="clearRangeSelection" variant="soft" size="sm"> Clear </Button>
           </div>
         </div>
       </div>
@@ -98,7 +113,6 @@
         :pdfUrl="file.url"
         :totalPages="file.pages"
         :selectedPages="selectedPages"
-        :getGlobalPageIndex="getGlobalPageIndex"
         @select="(pageNum) => $emit('select', pageNum)" />
     </div>
   </div>
@@ -123,8 +137,7 @@ interface Props {
   file: PDFFile;
   isFirstFile: boolean;
   showPreview: boolean;
-  selectedPages: Set<number>;
-  getGlobalPageIndex: (fileId: string, pageNumber: number) => number;
+  selectedPages: Set<string>;
   dragData?: string;
 }
 
@@ -137,7 +150,7 @@ const emit = defineEmits<{
   dragStart: [fileId: string];
   dragEnd: [fileId: string];
   drop: [draggedFileId: string, targetFileId: string];
-  rangeSelect: [selectedPages: number[]];
+  rangeSelect: [fileId: string, selectedPages: number[]];
   rangeClear: [];
 }>();
 
@@ -212,7 +225,7 @@ const validateRange = () => {
   try {
     const ranges = parsePageRange(input);
     const validRanges = ranges.filter(
-      (range) => range.start >= 1 && range.end <= props.file.pages && range.start <= range.end
+      (range) => range.start >= 1 && range.end <= props.file.pages && range.start <= range.end,
     );
 
     if (validRanges.length !== ranges.length) {
@@ -257,12 +270,11 @@ const applyRangeSelection = () => {
 
     for (const range of ranges) {
       for (let page = range.start; page <= range.end; page++) {
-        const globalIndex = props.getGlobalPageIndex(props.file.id, page);
-        selectedPages.push(globalIndex);
+        selectedPages.push(page);
       }
     }
 
-    emit('rangeSelect', selectedPages);
+    emit('rangeSelect', props.file.id, selectedPages);
     showRangeSelector.value = false;
     rangeInput.value = '';
     rangeError.value = '';

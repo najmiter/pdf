@@ -1,5 +1,5 @@
 import { ref, computed } from 'vue';
-import { PDFDocument, PDFName, type SaveOptions } from 'pdf-lib';
+import type { SaveOptions } from 'pdf-lib';
 
 export interface CompressionSettings {
   quality: number; // 0.1 to 1.0
@@ -41,6 +41,7 @@ class PDFCompressionManager {
     try {
       onProgress?.(10, 'Reading PDF file...');
 
+      const { PDFDocument, PDFName } = await import('pdf-lib');
       const arrayBuffer = await file.arrayBuffer();
 
       onProgress?.(30, 'Analyzing document structure...');

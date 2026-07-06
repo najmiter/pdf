@@ -1,42 +1,76 @@
 <template>
   <div
-    :class="
-      cn(
-        'rounded-lg transition-colors duration-200 p-8',
-        { 'border-primary bg-primary/5': isDragOver, 'border-border hover:border-primary/50': !isDragOver },
-        props.class
-      )
-    "
+    :class="cn('p-8 transition-colors duration-200', props.class)"
     @dragover.prevent="handleDragOver"
     @dragenter.prevent="handleDragEnter"
     @dragleave.prevent="handleDragLeave"
     @drop.prevent="handleDrop">
-    <div class="flex flex-col items-center justify-center space-y-4 text-center">
-      <div :class="cn('rounded-full p-6', { 'bg-primary/10': isDragOver, 'bg-primary/15': !isDragOver })">
-        <Icon
-          icon="lucide:file-text"
-          :class="cn('h-12 w-12', { 'text-primary': isDragOver, 'text-primary/50': !isDragOver })" />
-      </div>
+    <div class="animate-fade-up mx-auto flex w-full max-w-xl flex-col items-center text-center">
+      <!-- Drop card -->
+      <div
+        :class="
+          cn(
+            'group relative w-full cursor-pointer rounded-3xl border-2 border-dashed bg-card/60 px-8 py-14 shadow-sm backdrop-blur-sm transition-all duration-300',
+            isDragOver
+              ? 'scale-[1.01] border-primary bg-primary/5 shadow-[0_8px_40px_color-mix(in_oklch,var(--primary)_25%,transparent)]'
+              : 'border-border hover:border-primary/50 hover:shadow-md'
+          )
+        "
+        @click="triggerFileInput">
+        <div class="flex flex-col items-center space-y-6 select-none">
+          <!-- Icon -->
+          <div class="relative">
+            <div
+              :class="
+                cn(
+                  'relative grid h-20 w-20 place-content-center rounded-2xl bg-primary/15 ring-1 ring-primary/30 transition-transform duration-300',
+                  isDragOver ? 'scale-110 -rotate-3' : 'group-hover:scale-105 group-hover:-rotate-2'
+                )
+              ">
+              <Icon
+                :icon="isDragOver ? 'lucide:download' : 'lucide:file-text'"
+                class="h-9 w-9 text-primary transition-transform duration-300" />
+            </div>
+          </div>
 
-      <div class="space-y-2 select-none">
-        <div :class="cn('text-lg font-semibold', { 'text-primary': isDragOver, 'text-foreground': !isDragOver })">
-          {{ isDragOver ? 'Drop your PDF files here' : 'Upload PDF Files' }}
+          <div class="space-y-1.5">
+            <div class="text-xl font-semibold tracking-tight">
+              {{ isDragOver ? 'Drop your PDFs here' : 'Drop PDFs here' }}
+            </div>
+            <p class="text-sm text-muted-foreground">
+              {{ isDragOver ? 'Release to add your files' : 'or click anywhere in this area to browse' }}
+            </p>
+          </div>
+
+          <Button
+            type="button"
+            aria-label="Upload PDF Files"
+            size="lg"
+            :disabled="isProcessing"
+            class="pointer-events-none font-semibold">
+            <Icon icon="lucide:folder-open" class="h-4 w-4" />
+            Browse Files
+          </Button>
         </div>
-        <p class="text-muted-foreground text-sm max-w-md">
-          {{ isDragOver ? 'Release to upload' : 'Drag and drop your PDF files here, or click to browse' }}
-        </p>
       </div>
 
-      <Button
-        type="button"
-        aria-label="Upload PDF Files"
-        variant="default"
-        @click="triggerFileInput"
-        :disabled="isProcessing"
-        class="bg-primary text-black transition-colors hover:bg-primary/90">
-        <Icon icon="lucide:folder-open" class="mr-1 h-4 w-4" />
-        Browse Files
-      </Button>
+      <!-- Trust hints -->
+      <div
+        v-if="showHints"
+        class="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-muted-foreground">
+        <span class="inline-flex items-center gap-1.5">
+          <Icon icon="lucide:shield-check" class="h-3.5 w-3.5 text-primary" />
+          Processed locally — files never leave your device
+        </span>
+        <span class="inline-flex items-center gap-1.5">
+          <Icon icon="lucide:zap" class="h-3.5 w-3.5 text-primary" />
+          Free &amp; unlimited
+        </span>
+        <span class="inline-flex items-center gap-1.5">
+          <Icon icon="lucide:files" class="h-3.5 w-3.5 text-primary" />
+          Multiple files supported
+        </span>
+      </div>
 
       <input
         ref="fileInputRef"
@@ -57,11 +91,13 @@ import Button from '@/components/ui/Button.vue';
 
 interface Props {
   isProcessing?: boolean;
+  showHints?: boolean;
   class?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   isProcessing: false,
+  showHints: true,
 });
 
 const emit = defineEmits<{

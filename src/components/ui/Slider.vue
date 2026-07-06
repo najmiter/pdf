@@ -8,7 +8,11 @@
         {{ displayValue }}
       </span>
     </div>
-    <div class="relative">
+    <div class="relative flex h-5 items-center">
+      <div class="absolute inset-x-0 h-1.5 rounded-full bg-muted" />
+      <div
+        class="absolute left-0 z-0 h-1.5 rounded-full bg-gradient-to-r from-primary/70 to-primary pointer-events-none"
+        :style="{ width: `${((modelValue - min) / (max - min)) * 100}%` }"></div>
       <input
         :id="id"
         type="range"
@@ -17,10 +21,7 @@
         :step="step"
         :value="modelValue"
         @input="handleInput"
-        :class="cn('w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer', 'range-slider')" />
-      <div
-        class="absolute top-2.5 left-0 z-0 h-2 bg-primary rounded-lg pointer-events-none"
-        :style="{ width: `${((modelValue - min) / (max - min)) * 100}%` }"></div>
+        :class="cn('relative z-10 h-5 w-full cursor-pointer appearance-none bg-transparent', 'range-slider')" />
     </div>
     <div v-if="description" class="text-xs text-muted-foreground">
       {{ description }}
@@ -72,23 +73,33 @@ const handleInput = (event: Event) => {
 <style scoped>
 .range-slider::-webkit-slider-thumb {
   appearance: none;
-  height: 20px;
-  width: 20px;
+  height: 18px;
+  width: 18px;
   border-radius: 50%;
-  background: oklch(81.329% 0.12994 60.273);
+  background: var(--card);
   cursor: pointer;
-  border: 2px solid rgb(113, 113, 113);
-  z-index: 5;
-  position: relative;
+  border: 2px solid var(--primary);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.2);
+  transition: transform 0.15s ease;
+}
+
+.range-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.12);
 }
 
 .range-slider::-moz-range-thumb {
-  height: 10px;
-  width: 20px;
+  height: 18px;
+  width: 18px;
   border-radius: 50%;
-  background: hsl(var(--primary));
+  background: var(--card);
   cursor: pointer;
-  border: 2px solid white;
+  border: 2px solid var(--primary);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.2);
+  transition: transform 0.15s ease;
+}
+
+.range-slider::-moz-range-thumb:hover {
+  transform: scale(1.12);
 }
 
 .range-slider::-webkit-slider-track {

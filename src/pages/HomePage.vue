@@ -16,35 +16,54 @@
       </div>
 
       <!-- PDF Pages Grid -->
-      <div v-else class="space-y-6">
+      <div v-else class="space-y-5 animate-fade-in">
         <!-- File Management -->
-        <div class="flex items-center justify-between">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 class="text-base font-semibold tracking-tight">
+              {{ files.length }} {{ files.length === 1 ? 'file' : 'files' }} loaded
+            </h2>
+            <p class="text-xs text-muted-foreground mt-0.5">
+              <span v-if="selectedPages.size > 0" class="font-medium text-primary">
+                {{ selectedPages.size }} {{ selectedPages.size === 1 ? 'page' : 'pages' }} selected
+              </span>
+              <span v-else>Click pages to select them, drag cards to reorder files</span>
+            </p>
+          </div>
           <div class="flex items-center flex-wrap gap-2">
-            <Button variant="soft" type="button" aria-label="add more files" @click="addMoreFiles">
+            <Button variant="soft" size="sm" type="button" aria-label="add more files" @click="addMoreFiles">
               <Icon icon="lucide:plus" class="h-4 w-4" />
-              Add More Files
-            </Button>
-            <Button variant="soft" type="button" aria-label="clear all files" @click="clearAllFiles">
-              <Icon icon="lucide:trash-2" class="h-4 w-4" />
-              Clear All
+              Add Files
             </Button>
             <Button
               variant="soft"
+              size="sm"
               type="button"
               aria-label="select all pages"
               @click="selectAllPages"
               :disabled="files.length === 0">
               <Icon icon="lucide:mouse-pointer-click" class="h-4 w-4" />
-              Select All Pages
+              Select All
             </Button>
             <Button
               variant="soft"
+              size="sm"
               type="button"
               aria-label="clear page selection"
               @click="clearPageSelection"
               :disabled="selectedPages.size === 0">
               <Icon icon="lucide:x" class="h-4 w-4" />
-              Clear Selection
+              Deselect
+            </Button>
+            <Button
+              variant="soft"
+              size="sm"
+              type="button"
+              aria-label="clear all files"
+              class="text-destructive hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive"
+              @click="clearAllFiles">
+              <Icon icon="lucide:trash-2" class="h-4 w-4" />
+              Clear All
             </Button>
           </div>
         </div>

@@ -1,156 +1,113 @@
 <template>
-  <div class="w-80 border-l bg-background/50 backdrop-blur-sm p-6 h-full overflow-y-auto">
-    <!-- Header -->
-    <div class="flex items-center justify-between mb-6">
-      <h2 class="text-lg font-semibold">
-        {{ selectedTool ? selectedTool.charAt(0).toUpperCase() + selectedTool.slice(1) + ' Tool' : 'PDF Tools' }}
-      </h2>
-    </div>
-
+  <div class="w-80 shrink-0 border-l border-border/60 bg-sidebar/80 backdrop-blur-sm p-5 h-full overflow-y-auto">
     <!-- Tool Cards -->
     <div class="space-y-4">
       <!-- Tool List (when no tool selected) -->
-      <div v-if="!selectedTool" class="space-y-2">
-        <h3 class="text-sm font-medium text-muted-foreground mb-3">Available Tools</h3>
+      <div v-if="!selectedTool" class="space-y-4 animate-fade-in">
+        <div>
+          <h2 class="text-base font-semibold tracking-tight">Tools</h2>
+          <p class="text-xs text-muted-foreground mt-0.5">Pick an action to apply to your files</p>
+        </div>
 
-        <Button
-          type="button"
-          aria-label="Merge PDFs"
-          @click="selectedTool = 'merge'"
-          variant="soft"
-          class="w-full justify-start p-3 h-auto">
-          <div class="flex items-center space-x-3">
-            <Icon icon="lucide:file-plus" class="h-5 w-5 text-primary" />
-            <div class="text-left">
-              <div class="font-medium">Merge PDFs</div>
-              <div class="text-xs text-muted-foreground">Combine multiple PDF files</div>
+        <div class="space-y-1.5">
+          <component
+            :is="tool.route ? 'router-link' : 'button'"
+            v-for="tool in tools"
+            :key="tool.key"
+            :to="tool.route"
+            type="button"
+            :aria-label="tool.title"
+            class="group flex w-full cursor-pointer items-center gap-3 rounded-xl border border-transparent p-2.5 text-left transition-all duration-200 hover:border-border hover:bg-card hover:shadow-sm"
+            @click="tool.route ? undefined : (selectedTool = tool.key)">
+            <div
+              class="grid h-9 w-9 shrink-0 place-content-center rounded-lg bg-primary/12 ring-1 ring-primary/20 transition-colors duration-200 group-hover:bg-primary/20">
+              <Icon :icon="tool.icon" class="h-4.5 w-4.5 text-primary" />
             </div>
-          </div>
-        </Button>
-
-        <Button
-          type="button"
-          aria-label="Split PDF"
-          @click="selectedTool = 'split'"
-          variant="soft"
-          class="w-full justify-start p-3 h-auto">
-          <div class="flex items-center space-x-3">
-            <Icon icon="lucide:scissors" class="h-5 w-5 text-primary" />
-            <div class="text-left">
-              <div class="font-medium">Split PDF</div>
-              <div class="text-xs text-muted-foreground">Extract pages from PDF files</div>
+            <div class="min-w-0 flex-1">
+              <div class="text-sm font-medium">{{ tool.title }}</div>
+              <div class="truncate text-xs text-muted-foreground">{{ tool.description }}</div>
             </div>
-          </div>
-        </Button>
-
-        <Button
-          type="button"
-          aria-label="Remove Pages"
-          @click="selectedTool = 'remove'"
-          variant="soft"
-          class="w-full justify-start p-3 h-auto">
-          <div class="flex items-center space-x-3">
-            <Icon icon="lucide:trash-2" class="h-5 w-5 text-primary" />
-            <div class="text-left">
-              <div class="font-medium">Remove Pages</div>
-              <div class="text-xs text-muted-foreground">Delete selected pages from PDFs</div>
-            </div>
-          </div>
-        </Button>
-
-        <Button
-          type="button"
-          aria-label="Convert to Images"
-          @click="selectedTool = 'convert'"
-          variant="soft"
-          class="w-full justify-start p-3 h-auto">
-          <div class="flex items-center space-x-3">
-            <Icon icon="lucide:image" class="h-5 w-5 text-primary" />
-            <div class="text-left">
-              <div class="font-medium">Convert to Images</div>
-              <div class="text-xs text-muted-foreground">Convert pages to PNG/JPEG</div>
-            </div>
-          </div>
-        </Button>
-
-        <router-link to="/compress" class="block">
-          <Button type="button" aria-label="Compress PDF" variant="soft" class="w-full justify-start p-3 h-auto">
-            <div class="flex items-center space-x-3">
-              <Icon icon="lucide:zap" class="h-5 w-5 text-primary" />
-              <div class="text-left">
-                <div class="font-medium">Compress PDF</div>
-                <div class="text-xs text-muted-foreground">Reduce PDF file size</div>
-              </div>
-            </div>
-          </Button>
-        </router-link>
-
-        <Button
-          type="button"
-          aria-label="Insert PDF"
-          @click="selectedTool = 'insert'"
-          variant="soft"
-          class="w-full justify-start p-3 h-auto">
-          <div class="flex items-center space-x-3">
-            <Icon icon="lucide:plus" class="h-5 w-5 text-primary" />
-            <div class="text-left">
-              <div class="font-medium">Insert PDF</div>
-              <div class="text-xs text-muted-foreground">Insert one PDF into another</div>
-            </div>
-          </div>
-        </Button>
+            <Icon
+              icon="lucide:chevron-right"
+              class="h-4 w-4 shrink-0 text-muted-foreground/50 transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-primary" />
+          </component>
+        </div>
       </div>
 
       <!-- Tool Controls (when tool selected) -->
-      <div v-else class="space-y-4">
-        <div class="flex items-center justify-between">
-          <Button type="button" aria-label="back to tools" @click="selectedTool = null" variant="soft" size="sm">
-            <Icon icon="lucide:arrow-left" class="mr-2 h-4 w-4" />
-            Back to Tools
-          </Button>
-        </div>
+      <div v-else class="space-y-4 animate-fade-in">
+        <button
+          type="button"
+          aria-label="back to tools"
+          @click="selectedTool = null"
+          class="inline-flex cursor-pointer items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+          <Icon icon="lucide:arrow-left" class="h-4 w-4" />
+          All tools
+        </button>
 
         <!-- Merge Tool -->
-        <div v-if="selectedTool === 'merge'" class="p-4 border rounded-lg space-y-3">
-          <div class="flex items-center space-x-2">
-            <Icon icon="lucide:file-plus" class="h-5 w-5 text-primary" />
-            <h3 class="font-medium">Merge PDFs</h3>
+        <div v-if="selectedTool === 'merge'" class="rounded-2xl border border-border/70 bg-card p-4 shadow-sm space-y-4">
+          <div class="flex items-center gap-3">
+            <div class="grid h-9 w-9 shrink-0 place-content-center rounded-lg bg-primary/12 ring-1 ring-primary/20">
+              <Icon icon="lucide:file-plus" class="h-4.5 w-4.5 text-primary" />
+            </div>
+            <div>
+              <h3 class="text-sm font-semibold">Merge PDFs</h3>
+              <p class="text-xs text-muted-foreground">Combine all files into one document</p>
+            </div>
           </div>
-          <p class="text-sm text-muted-foreground">Combine multiple PDF files into one</p>
           <Button
             type="button"
             aria-label="merge all files"
             @click="handleMerge"
             :disabled="files.length < 2 || isProcessing"
-            class="w-full"
-            size="sm">
-            <Icon icon="lucide:download" class="mr-2 h-4 w-4" />
-            Merge All Files
+            class="w-full">
+            <Icon icon="lucide:download" class="h-4 w-4" />
+            Merge {{ files.length }} Files
           </Button>
+          <p v-if="files.length < 2" class="text-xs text-muted-foreground text-center">
+            Add at least 2 files to merge
+          </p>
         </div>
 
         <!-- Split Tool -->
-        <div v-if="selectedTool === 'split'" class="p-4 border rounded-lg space-y-3">
-          <div class="flex items-center space-x-2">
-            <Icon icon="lucide:scissors" class="h-5 w-5 text-primary" />
-            <h3 class="font-medium">Split PDF</h3>
+        <div v-if="selectedTool === 'split'" class="rounded-2xl border border-border/70 bg-card p-4 shadow-sm space-y-4">
+          <div class="flex items-center gap-3">
+            <div class="grid h-9 w-9 shrink-0 place-content-center rounded-lg bg-primary/12 ring-1 ring-primary/20">
+              <Icon icon="lucide:scissors" class="h-4.5 w-4.5 text-primary" />
+            </div>
+            <div>
+              <h3 class="text-sm font-semibold">Split PDF</h3>
+              <p class="text-xs text-muted-foreground">Extract pages into new files</p>
+            </div>
           </div>
-          <p class="text-sm text-muted-foreground">Extract pages from PDF files</p>
 
-          <div v-if="selectedPages.size > 0" class="space-y-3">
-            <p class="text-xs text-muted-foreground">{{ selectedPages.size }} page(s) selected</p>
+          <div v-if="selectedPages.size > 0" class="space-y-4">
+            <div
+              class="flex items-center gap-2 rounded-lg bg-primary/10 px-3 py-2 text-xs font-medium text-accent-foreground">
+              <Icon icon="lucide:check-circle-2" class="h-3.5 w-3.5 text-primary" />
+              {{ selectedPages.size }} {{ selectedPages.size === 1 ? 'page' : 'pages' }} selected
+            </div>
 
             <!-- Split Options (when multiple pages selected) -->
             <div v-if="selectedPages.size > 1" class="space-y-2">
-              <div class="text-xs font-medium text-muted-foreground">Output Options:</div>
-              <div class="space-y-1">
-                <label class="flex items-center space-x-2 text-xs">
-                  <input v-model="splitMergeOption" type="radio" value="merged" class="w-3 h-3" />
-                  <span>One merged PDF</span>
-                </label>
-                <label class="flex items-center space-x-2 text-xs">
-                  <input v-model="splitMergeOption" type="radio" value="separate" class="w-3 h-3" />
-                  <span>Separate PDFs for each page</span>
+              <div class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Output</div>
+              <div class="grid gap-1.5">
+                <label
+                  v-for="opt in [
+                    { value: 'merged', label: 'One merged PDF', icon: 'lucide:file-check' },
+                    { value: 'separate', label: 'Separate PDF per page', icon: 'lucide:files' },
+                  ]"
+                  :key="opt.value"
+                  :class="[
+                    'flex cursor-pointer items-center gap-2.5 rounded-lg border px-3 py-2 text-xs font-medium transition-all duration-150',
+                    splitMergeOption === opt.value
+                      ? 'border-primary/50 bg-primary/10 text-foreground'
+                      : 'border-border text-muted-foreground hover:border-primary/30 hover:text-foreground',
+                  ]">
+                  <input v-model="splitMergeOption" type="radio" :value="opt.value" class="sr-only" />
+                  <Icon :icon="opt.icon" class="h-4 w-4" :class="splitMergeOption === opt.value ? 'text-primary' : ''" />
+                  <span>{{ opt.label }}</span>
                 </label>
               </div>
             </div>
@@ -160,78 +117,101 @@
               aria-label="Split selected pages"
               @click="handleSplitSelected"
               :disabled="selectedPages.size === 0 || isProcessing"
-              class="w-full"
-              size="sm">
-              <Icon icon="lucide:scissors" class="mr-2 h-4 w-4" />
+              class="w-full">
+              <Icon icon="lucide:scissors" class="h-4 w-4" />
               <span v-if="selectedPages.size === 1">Extract Selected Page</span>
-              <span v-else-if="splitMergeOption === 'merged'">Extract & Merge Pages</span>
+              <span v-else-if="splitMergeOption === 'merged'">Extract &amp; Merge Pages</span>
               <span v-else>Extract Pages Separately</span>
             </Button>
           </div>
-          <div v-else class="text-xs text-muted-foreground text-center py-2">Select pages to split</div>
+          <div v-else class="rounded-lg border border-dashed border-border px-3 py-4 text-center text-xs text-muted-foreground">
+            Click pages in the preview to select them
+          </div>
         </div>
 
         <!-- Remove Pages Tool -->
-        <div v-if="selectedTool === 'remove'" class="p-4 border rounded-lg space-y-3">
-          <div class="flex items-center space-x-2">
-            <Icon icon="lucide:trash-2" class="h-5 w-5 text-primary" />
-            <h3 class="font-medium">Remove Pages</h3>
+        <div v-if="selectedTool === 'remove'" class="rounded-2xl border border-border/70 bg-card p-4 shadow-sm space-y-4">
+          <div class="flex items-center gap-3">
+            <div class="grid h-9 w-9 shrink-0 place-content-center rounded-lg bg-destructive/10 ring-1 ring-destructive/20">
+              <Icon icon="lucide:trash-2" class="h-4.5 w-4.5 text-destructive" />
+            </div>
+            <div>
+              <h3 class="text-sm font-semibold">Remove Pages</h3>
+              <p class="text-xs text-muted-foreground">Delete selected pages from PDFs</p>
+            </div>
           </div>
-          <p class="text-sm text-muted-foreground">Delete selected pages from PDFs</p>
 
-          <div v-if="selectedPages.size > 0" class="space-y-2">
-            <p class="text-xs text-muted-foreground">{{ selectedPages.size }} page(s) selected</p>
+          <div v-if="selectedPages.size > 0" class="space-y-4">
+            <div
+              class="flex items-center gap-2 rounded-lg bg-destructive/10 px-3 py-2 text-xs font-medium">
+              <Icon icon="lucide:alert-circle" class="h-3.5 w-3.5 text-destructive" />
+              {{ selectedPages.size }} {{ selectedPages.size === 1 ? 'page' : 'pages' }} will be removed
+            </div>
             <Button
               @click="handleRemoveSelected"
               :disabled="selectedPages.size === 0 || isProcessing"
               class="w-full"
-              size="sm"
               type="button"
               aria-label="Remove selected pages"
               variant="destructive">
-              <Icon icon="lucide:trash-2" class="mr-2 h-4 w-4" />
+              <Icon icon="lucide:trash-2" class="h-4 w-4" />
               Remove Selected Pages
             </Button>
           </div>
-          <div v-else class="text-xs text-muted-foreground text-center py-2">Select pages to remove</div>
+          <div v-else class="rounded-lg border border-dashed border-border px-3 py-4 text-center text-xs text-muted-foreground">
+            Click pages in the preview to select them
+          </div>
         </div>
 
         <!-- Convert to Images Tool -->
-        <div v-if="selectedTool === 'convert'" class="p-4 border rounded-lg space-y-3">
-          <div class="flex items-center space-x-2">
-            <Icon icon="lucide:image" class="h-5 w-5 text-primary" />
-            <h3 class="font-medium">Convert to Images</h3>
+        <div v-if="selectedTool === 'convert'" class="rounded-2xl border border-border/70 bg-card p-4 shadow-sm space-y-4">
+          <div class="flex items-center gap-3">
+            <div class="grid h-9 w-9 shrink-0 place-content-center rounded-lg bg-primary/12 ring-1 ring-primary/20">
+              <Icon icon="lucide:image" class="h-4.5 w-4.5 text-primary" />
+            </div>
+            <div>
+              <h3 class="text-sm font-semibold">Convert to Images</h3>
+              <p class="text-xs text-muted-foreground">Export pages as PNG or JPEG</p>
+            </div>
           </div>
-          <p class="text-sm text-muted-foreground">Convert selected pages to high-quality PNG/JPEG images</p>
 
-          <div v-if="selectedPages.size > 0" class="space-y-3">
-            <p class="text-xs text-muted-foreground">{{ selectedPages.size }} page(s) selected</p>
+          <div v-if="selectedPages.size > 0" class="space-y-4">
+            <div
+              class="flex items-center gap-2 rounded-lg bg-primary/10 px-3 py-2 text-xs font-medium text-accent-foreground">
+              <Icon icon="lucide:check-circle-2" class="h-3.5 w-3.5 text-primary" />
+              {{ selectedPages.size }} {{ selectedPages.size === 1 ? 'page' : 'pages' }} selected
+            </div>
 
             <!-- Format Selection -->
             <div class="space-y-2">
-              <div class="text-xs font-medium text-muted-foreground">Output Format:</div>
-              <div class="space-y-1">
-                <label class="flex items-center space-x-2 text-xs">
-                  <input v-model="imageFormat" type="radio" value="png" class="w-3 h-3" />
-                  <span>PNG (lossless)</span>
-                </label>
-                <label class="flex items-center space-x-2 text-xs">
-                  <input v-model="imageFormat" type="radio" value="jpeg" class="w-3 h-3" />
-                  <span>JPEG (smaller file size)</span>
+              <div class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Format</div>
+              <div class="grid grid-cols-2 gap-1.5">
+                <label
+                  v-for="fmt in [
+                    { value: 'png', label: 'PNG', hint: 'Lossless' },
+                    { value: 'jpeg', label: 'JPEG', hint: 'Smaller size' },
+                  ]"
+                  :key="fmt.value"
+                  :class="[
+                    'flex cursor-pointer flex-col items-center gap-0.5 rounded-lg border px-3 py-2 transition-all duration-150',
+                    imageFormat === fmt.value
+                      ? 'border-primary/50 bg-primary/10'
+                      : 'border-border hover:border-primary/30',
+                  ]">
+                  <input v-model="imageFormat" type="radio" :value="fmt.value" class="sr-only" />
+                  <span class="text-xs font-semibold">{{ fmt.label }}</span>
+                  <span class="text-[10px] text-muted-foreground">{{ fmt.hint }}</span>
                 </label>
               </div>
             </div>
 
             <!-- Quality Slider (for JPEG) -->
             <div v-if="imageFormat === 'jpeg'" class="space-y-2">
-              <div class="text-xs font-medium text-muted-foreground">Quality: {{ imageQuality }}%</div>
-              <input
-                v-model="imageQuality"
-                type="range"
-                min="70"
-                max="100"
-                step="5"
-                class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700" />
+              <div class="flex items-center justify-between text-xs">
+                <span class="font-semibold uppercase tracking-wide text-muted-foreground">Quality</span>
+                <span class="font-semibold tabular-nums text-primary">{{ imageQuality }}%</span>
+              </div>
+              <Slider v-model="imageQuality" :min="70" :max="100" :step="5" :show-value="false" />
             </div>
 
             <Button
@@ -239,28 +219,33 @@
               :disabled="selectedPages.size === 0 || isProcessing"
               class="w-full"
               type="button"
-              aria-label="Convert to Images"
-              size="sm">
-              <Icon icon="lucide:download" class="mr-2 h-4 w-4" />
-              Convert to {{ imageFormat.toUpperCase() }} & Download ZIP
+              aria-label="Convert to Images">
+              <Icon icon="lucide:download" class="h-4 w-4" />
+              Download as {{ imageFormat.toUpperCase() }} ZIP
             </Button>
           </div>
-          <div v-else class="text-xs text-muted-foreground text-center py-2">Select pages to convert</div>
+          <div v-else class="rounded-lg border border-dashed border-border px-3 py-4 text-center text-xs text-muted-foreground">
+            Click pages in the preview to select them
+          </div>
         </div>
 
         <!-- Insert PDF Tool -->
-        <div v-if="selectedTool === 'insert'" class="p-4 border rounded-lg space-y-3">
-          <div class="flex items-center space-x-2">
-            <Icon icon="lucide:plus" class="h-5 w-5 text-primary" />
-            <h3 class="font-medium">Insert PDF</h3>
+        <div v-if="selectedTool === 'insert'" class="rounded-2xl border border-border/70 bg-card p-4 shadow-sm space-y-4">
+          <div class="flex items-center gap-3">
+            <div class="grid h-9 w-9 shrink-0 place-content-center rounded-lg bg-primary/12 ring-1 ring-primary/20">
+              <Icon icon="lucide:plus" class="h-4.5 w-4.5 text-primary" />
+            </div>
+            <div>
+              <h3 class="text-sm font-semibold">Insert PDF</h3>
+              <p class="text-xs text-muted-foreground">Place one PDF inside another</p>
+            </div>
           </div>
-          <p class="text-sm text-muted-foreground">Insert one PDF into another at a specific point</p>
 
-          <div v-if="files.length >= 2" class="space-y-3">
+          <div v-if="files.length >= 2" class="space-y-4">
             <!-- Select Original PDF -->
-            <div class="space-y-2">
-              <div class="text-xs font-medium text-muted-foreground">Original PDF:</div>
-              <select v-model="insertOriginalFileId" class="w-full p-2 border rounded text-sm">
+            <div class="space-y-1.5">
+              <label class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Original PDF</label>
+              <select v-model="insertOriginalFileId" :class="fieldClass">
                 <option value="">Select original PDF</option>
                 <option v-for="file in files" :key="file.id" :value="file.id">
                   {{ file.name }} ({{ file.pages }} pages)
@@ -269,9 +254,9 @@
             </div>
 
             <!-- Select Insert PDF -->
-            <div class="space-y-2">
-              <div class="text-xs font-medium text-muted-foreground">PDF to Insert:</div>
-              <select v-model="insertFileId" class="w-full p-2 border rounded text-sm">
+            <div class="space-y-1.5">
+              <label class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">PDF to Insert</label>
+              <select v-model="insertFileId" :class="fieldClass">
                 <option value="">Select PDF to insert</option>
                 <option
                   v-for="file in files"
@@ -284,31 +269,28 @@
             </div>
 
             <!-- Insertion Point -->
-            <div class="space-y-2">
-              <div class="text-xs font-medium text-muted-foreground">Insert at page:</div>
+            <div class="space-y-1.5">
+              <label class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Insert at page</label>
               <input
                 v-model.number="insertAtPage"
                 type="number"
                 min="1"
                 :max="(originalFile?.pages ?? 0) + 1"
-                class="w-full p-2 border rounded text-sm"
+                :class="fieldClass"
                 placeholder="e.g., 5" />
-              <div class="text-xs text-muted-foreground">
-                Insert before this page number (1 to {{ (originalFile?.pages ?? 0) + 1 }})
-              </div>
+              <p class="text-xs text-muted-foreground">
+                Inserted before this page (1 to {{ (originalFile?.pages ?? 0) + 1 }})
+              </p>
             </div>
 
             <!-- Page Ranges (optional) -->
-            <div class="space-y-2">
-              <div class="text-xs font-medium text-muted-foreground">Pages to insert (optional):</div>
-              <input
-                v-model="insertRanges"
-                type="text"
-                class="w-full p-2 border rounded text-sm"
-                placeholder="e.g., 1-3,5,7-9" />
-              <div class="text-xs text-muted-foreground">
-                Leave empty to insert all pages. Use ranges like 1-3 or single pages like 5.
-              </div>
+            <div class="space-y-1.5">
+              <label class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Pages to insert
+                <span class="font-normal normal-case">(optional)</span>
+              </label>
+              <input v-model="insertRanges" type="text" :class="fieldClass" placeholder="e.g., 1-3,5,7-9" />
+              <p class="text-xs text-muted-foreground">Leave empty to insert all pages</p>
             </div>
 
             <Button
@@ -316,13 +298,12 @@
               aria-label="Insert PDF & download"
               @click="handleInsertPDF"
               :disabled="!insertOriginalFileId || !insertFileId || !insertAtPage || isProcessing"
-              class="w-full"
-              size="sm">
-              <Icon icon="lucide:plus" class="mr-2 h-4 w-4" />
-              Insert PDF & Download
+              class="w-full">
+              <Icon icon="lucide:plus" class="h-4 w-4" />
+              Insert PDF &amp; Download
             </Button>
           </div>
-          <div v-else class="text-xs text-muted-foreground text-center py-2">
+          <div v-else class="rounded-lg border border-dashed border-border px-3 py-4 text-center text-xs text-muted-foreground">
             Upload at least 2 PDFs to use this tool
           </div>
         </div>
@@ -330,11 +311,9 @@
     </div>
 
     <!-- Processing Indicator -->
-    <div v-if="isProcessing" class="mt-4 p-4 bg-muted rounded-lg">
-      <div class="flex items-center space-x-3">
-        <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-primary" />
-        <span class="text-sm">Processing...</span>
-      </div>
+    <div v-if="isProcessing" class="mt-4 flex items-center gap-3 rounded-xl border border-border/70 bg-card p-3.5 shadow-sm">
+      <div class="h-4.5 w-4.5 animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
+      <span class="text-sm font-medium">Processing…</span>
     </div>
   </div>
 </template>
@@ -343,8 +322,21 @@
 import { ref, computed } from 'vue';
 import { Icon } from '@iconify/vue';
 import Button from '@/components/ui/Button.vue';
+import Slider from '@/components/ui/Slider.vue';
 import type { PDFFile } from '@/composables/usePDFTools';
 import * as JSZip from 'jszip';
+
+const tools = [
+  { key: 'merge', title: 'Merge PDFs', description: 'Combine multiple files into one', icon: 'lucide:file-plus' },
+  { key: 'split', title: 'Split PDF', description: 'Extract pages into new files', icon: 'lucide:scissors' },
+  { key: 'remove', title: 'Remove Pages', description: 'Delete selected pages', icon: 'lucide:trash-2' },
+  { key: 'convert', title: 'Convert to Images', description: 'Export pages as PNG or JPEG', icon: 'lucide:image' },
+  { key: 'compress', title: 'Compress PDF', description: 'Reduce PDF file size', icon: 'lucide:zap', route: '/compress' },
+  { key: 'insert', title: 'Insert PDF', description: 'Place one PDF inside another', icon: 'lucide:plus' },
+];
+
+const fieldClass =
+  'w-full h-9 rounded-lg border border-input bg-card px-3 text-sm shadow-xs transition-colors focus:outline-none focus:ring-2 focus:ring-ring/60 focus:border-primary/50 placeholder:text-muted-foreground/60';
 
 interface Props {
   files: PDFFile[];

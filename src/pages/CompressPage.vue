@@ -16,234 +16,214 @@
       </div>
 
       <!-- Step 2: Compression Settings -->
-      <div v-else-if="selectedFile && !compressionResult" class="max-w-4xl mx-auto space-y-8">
+      <div v-else-if="selectedFile && !compressionResult" class="mx-auto max-w-4xl space-y-6 animate-fade-up">
         <!-- File Info Header -->
-        <div class="border rounded-lg p-6">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-4">
-              <div class="p-3 bg-primary/10 rounded-lg">
-                <Icon icon="lucide:file-text" class="h-8 w-8 text-primary" />
+        <div class="rounded-2xl border border-border/70 bg-card p-5 shadow-sm">
+          <div class="flex flex-wrap items-center justify-between gap-4">
+            <div class="flex min-w-0 items-center gap-4">
+              <div class="grid h-12 w-12 shrink-0 place-content-center rounded-xl bg-primary/12 ring-1 ring-primary/20">
+                <Icon icon="lucide:file-text" class="h-6 w-6 text-primary" />
               </div>
-              <div>
-                <h3 class="text-lg font-semibold">{{ selectedFile.name }}</h3>
+              <div class="min-w-0">
+                <h3 class="truncate text-base font-semibold">{{ selectedFile.name }}</h3>
                 <p class="text-sm text-muted-foreground">
-                  {{ formatFileSize(selectedFile.size) }} • Ready for compression
+                  {{ formatFileSize(selectedFile.size) }}
+                  <span class="mx-1 text-border">•</span>
+                  Ready for compression
                 </p>
               </div>
             </div>
-            <Button variant="soft" @click="resetSelection">
-              <Icon icon="lucide:x" class="h-4 w-4" />
+            <Button variant="soft" size="sm" @click="resetSelection">
+              <Icon icon="lucide:repeat" class="h-4 w-4" />
               Change File
             </Button>
           </div>
         </div>
 
         <!-- Compression Settings -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <!-- Settings Panel -->
-          <div class="space-y-6">
+          <div class="space-y-6 rounded-2xl border border-border/70 bg-card p-6 shadow-sm">
             <div>
-              <h2 class="text-xl font-semibold mb-4">Compression Settings</h2>
+              <h2 class="text-base font-semibold tracking-tight">Settings</h2>
+              <p class="text-xs text-muted-foreground mt-0.5">Tune how aggressively the file is compressed</p>
+            </div>
 
-              <!-- Quick Presets -->
-              <div class="space-y-3 mb-6">
-                <label class="text-sm font-medium text-foreground">Quick Presets</label>
-                <div class="grid grid-cols-3 gap-2">
-                  <Button
-                    variant="soft"
-                    size="sm"
-                    :class="currentPreset === 'light' ? 'bg-primary/20 border-primary' : ''"
-                    @click="applyPreset('light')"
-                    >&gt; Light
-                  </Button>
-                  <Button
-                    variant="soft"
-                    size="sm"
-                    :class="currentPreset === 'medium' ? 'bg-primary/20 border-primary' : ''"
-                    @click="applyPreset('medium')"
-                    >&gt; Medium
-                  </Button>
-                  <Button
-                    variant="soft"
-                    size="sm"
-                    :class="currentPreset === 'aggressive' ? 'bg-primary/20 border-primary' : ''"
-                    @click="applyPreset('aggressive')"
-                    >&gt; Aggressive
-                  </Button>
-                </div>
+            <!-- Quick Presets -->
+            <div class="space-y-2">
+              <label class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Preset</label>
+              <div class="grid grid-cols-3 gap-1 rounded-xl border border-border/70 bg-muted/50 p-1">
+                <button
+                  v-for="preset in ['light', 'medium', 'aggressive'] as const"
+                  :key="preset"
+                  type="button"
+                  :class="[
+                    'cursor-pointer rounded-lg px-3 py-1.5 text-xs font-semibold capitalize transition-all duration-200',
+                    currentPreset === preset
+                      ? 'bg-card text-foreground shadow-sm ring-1 ring-border/60'
+                      : 'text-muted-foreground hover:text-foreground',
+                  ]"
+                  @click="applyPreset(preset)">
+                  {{ preset }}
+                </button>
               </div>
+            </div>
 
-              <!-- Quality Slider -->
-              <Slider
-                v-model="compressionSettings.quality"
-                label="Compression Quality"
-                description="Higher values preserve more quality but result in larger file sizes"
-                :min="0.1"
-                :max="1"
-                :step="0.05"
-                :value-formatter="(value) => `${Math.round(value * 100)}%`"
-                class="mb-6" />
+            <!-- Quality Slider -->
+            <Slider
+              v-model="compressionSettings.quality"
+              label="Compression Quality"
+              description="Higher values preserve more quality but result in larger file sizes"
+              :min="0.1"
+              :max="1"
+              :step="0.05"
+              :value-formatter="(value) => `${Math.round(value * 100)}%`" />
 
-              <!-- Advanced Options -->
-              <div class="space-y-4">
-                <h3 class="text-lg font-medium">Advanced Options</h3>
+            <!-- Advanced Options -->
+            <div class="space-y-3 border-t border-border/60 pt-5">
+              <h3 class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Advanced</h3>
 
-                <Switch
-                  v-model="compressionSettings.removeMetadata"
-                  label="Remove metadata (author, creation date, etc.)"
-                  id="remove-metadata" />
+              <Switch
+                v-model="compressionSettings.removeMetadata"
+                label="Remove metadata (author, creation date, etc.)"
+                id="remove-metadata" />
 
-                <Switch
-                  v-model="compressionSettings.optimizeImages"
-                  label="Optimize embedded images"
-                  id="optimize-images" />
+              <Switch
+                v-model="compressionSettings.optimizeImages"
+                label="Optimize embedded images"
+                id="optimize-images" />
 
-                <Switch
-                  v-model="compressionSettings.removeUnusedObjects"
-                  label="Remove unused objects"
-                  id="remove-unused" />
+              <Switch v-model="compressionSettings.removeUnusedObjects" label="Remove unused objects" id="remove-unused" />
 
-                <Switch v-model="compressionSettings.linearize" label="Linearize for fast web view" id="linearize" />
+              <Switch v-model="compressionSettings.linearize" label="Linearize for fast web view" id="linearize" />
 
-                <Switch
-                  v-model="compressionSettings.removeAnnotations"
-                  label="Remove annotations and comments"
-                  id="remove-annotations" />
+              <Switch
+                v-model="compressionSettings.removeAnnotations"
+                label="Remove annotations and comments"
+                id="remove-annotations" />
 
-                <Switch v-model="compressionSettings.removeBookmarks" label="Remove bookmarks" id="remove-bookmarks" />
-              </div>
+              <Switch v-model="compressionSettings.removeBookmarks" label="Remove bookmarks" id="remove-bookmarks" />
             </div>
           </div>
 
           <!-- Preview Panel -->
-          <div class="space-y-6">
-            <div>
-              <h2 class="text-xl font-semibold mb-4">Compression Preview</h2>
+          <div class="space-y-4">
+            <div class="rounded-2xl border border-border/70 bg-card p-6 shadow-sm">
+              <h2 class="text-base font-semibold tracking-tight">Estimated Result</h2>
+              <p class="text-xs text-muted-foreground mt-0.5 mb-5">Rough estimate based on your settings</p>
 
               <!-- Size Estimation -->
-              <div class="border rounded-lg p-6 space-y-4">
-                <div class="flex items-center justify-between">
-                  <span class="text-sm text-muted-foreground">Original Size</span>
-                  <span class="font-medium">{{ formatFileSize(selectedFile.size) }}</span>
+              <div class="grid grid-cols-2 gap-3">
+                <div class="rounded-xl bg-muted/60 p-4 text-center">
+                  <div class="text-xl font-bold tabular-nums tracking-tight">{{ formatFileSize(selectedFile.size) }}</div>
+                  <div class="mt-1 text-xs text-muted-foreground">Original</div>
                 </div>
-
-                <div class="flex items-center justify-between">
-                  <span class="text-sm text-muted-foreground">Estimated Size</span>
-                  <span class="font-medium text-green-600">
-                    {{ estimatedSize }}
-                  </span>
-                </div>
-
-                <div class="flex items-center justify-between">
-                  <span class="text-sm text-muted-foreground">Estimated Reduction</span>
-                  <span class="font-medium text-green-600"> ~{{ estimatedReduction }}% </span>
-                </div>
-
-                <!-- Progress Bar for Estimation -->
-                <div class="mt-4">
-                  <div class="flex justify-between text-xs text-muted-foreground mb-1">
-                    <span>Size Reduction</span>
-                    <span>{{ estimatedReduction }}%</span>
-                  </div>
-                  <div class="w-full bg-border rounded-full h-2">
-                    <div
-                      class="bg-green-500 h-2 rounded-full transition-all duration-300"
-                      :style="{ width: `${estimatedReduction}%` }"></div>
-                  </div>
+                <div class="rounded-xl bg-success/10 p-4 text-center ring-1 ring-success/20">
+                  <div class="text-xl font-bold tabular-nums tracking-tight text-success">{{ estimatedSize }}</div>
+                  <div class="mt-1 text-xs text-muted-foreground">Estimated</div>
                 </div>
               </div>
 
-              <!-- Compression Quality Warning -->
-              <div
-                v-if="compressionSettings.quality < 0.7"
-                class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-                <div class="flex items-start space-x-2">
-                  <Icon icon="lucide:alert-triangle" class="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5" />
-                  <div>
-                    <h4 class="text-sm font-medium text-yellow-800 dark:text-yellow-200">Quality Warning</h4>
-                    <p class="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
-                      Very aggressive compression may significantly reduce image quality and text clarity.
-                    </p>
-                  </div>
+              <!-- Progress Bar for Estimation -->
+              <div class="mt-5">
+                <div class="mb-1.5 flex justify-between text-xs text-muted-foreground">
+                  <span>Estimated reduction</span>
+                  <span class="font-semibold tabular-nums text-success">~{{ estimatedReduction }}%</span>
+                </div>
+                <div class="h-2 w-full overflow-hidden rounded-full bg-muted">
+                  <div
+                    class="h-full rounded-full bg-gradient-to-r from-primary to-success transition-all duration-300"
+                    :style="{ width: `${estimatedReduction}%` }"></div>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
 
-        <!-- Action Buttons -->
-        <div class="flex justify-center space-x-4 pt-6 border-t">
-          <Button variant="soft" @click="resetSelection" :disabled="isCompressing">
-            <Icon icon="lucide:arrow-left" class="h-4 w-4" />
-            Back
-          </Button>
-          <Button @click="startCompression" :disabled="isCompressing" class="min-w-32">
-            <Icon v-if="!isCompressing" icon="lucide:zap" class="h-4 w-4" />
-            <Icon v-else icon="lucide:loader-2" class="h-4 w-4 animate-spin" />
-            {{ isCompressing ? 'Compressing...' : 'Compress PDF' }}
-          </Button>
+            <!-- Compression Quality Warning -->
+            <div
+              v-if="compressionSettings.quality < 0.7"
+              class="rounded-2xl border border-warning/30 bg-warning/10 p-4 animate-fade-in">
+              <div class="flex items-start gap-3">
+                <Icon icon="lucide:alert-triangle" class="mt-0.5 h-4.5 w-4.5 shrink-0 text-warning" />
+                <div>
+                  <h4 class="text-sm font-semibold">Aggressive compression</h4>
+                  <p class="mt-0.5 text-sm text-muted-foreground">
+                    Very low quality settings may noticeably reduce image quality and text clarity.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action -->
+            <Button @click="startCompression" :disabled="isCompressing" size="lg" class="w-full font-semibold">
+              <Icon v-if="!isCompressing" icon="lucide:zap" class="h-4 w-4" />
+              <Icon v-else icon="lucide:loader-2" class="h-4 w-4 animate-spin" />
+              {{ isCompressing ? 'Compressing…' : 'Compress PDF' }}
+            </Button>
+          </div>
         </div>
       </div>
 
       <!-- Step 3: Results -->
-      <div v-else-if="compressionResult" class="max-w-2xl mx-auto space-y-8">
+      <div v-else-if="compressionResult" class="mx-auto max-w-xl space-y-6 pt-8 animate-scale-in">
         <!-- Success Header -->
-        <div class="text-center space-y-4">
-          <div class="inline-flex items-center justify-center w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-full">
-            <Icon icon="lucide:check" class="h-8 w-8 text-green-600 dark:text-green-400" />
+        <div class="space-y-4 text-center">
+          <div
+            class="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-success/12 ring-1 ring-success/25">
+            <Icon icon="lucide:check" class="h-8 w-8 text-success" />
           </div>
           <div>
-            <h2 class="text-2xl font-bold">Compression Complete!</h2>
-            <p class="text-muted-foreground">Your PDF has been successfully compressed</p>
+            <h2 class="text-2xl font-bold tracking-tight">Compression complete</h2>
+            <p class="mt-1 text-muted-foreground">Your PDF is ready for download</p>
           </div>
         </div>
 
         <!-- Results Card -->
-        <div class="border rounded-lg p-6 space-y-6">
+        <div class="space-y-6 rounded-2xl border border-border/70 bg-card p-6 shadow-sm">
           <!-- File Info -->
-          <div class="flex items-center space-x-4">
-            <div class="p-3 bg-primary/10 rounded-lg">
-              <Icon icon="lucide:file-text" class="h-6 w-6 text-primary" />
+          <div class="flex items-center gap-4">
+            <div class="grid h-11 w-11 shrink-0 place-content-center rounded-xl bg-primary/12 ring-1 ring-primary/20">
+              <Icon icon="lucide:file-text" class="h-5.5 w-5.5 text-primary" />
             </div>
-            <div class="flex-1">
-              <h3 class="font-semibold">{{ compressionResult.filename }}</h3>
-              <p class="text-sm text-muted-foreground">Ready for download</p>
+            <div class="min-w-0 flex-1">
+              <h3 class="truncate text-sm font-semibold">{{ compressionResult.filename }}</h3>
+              <p class="text-xs text-muted-foreground">Ready for download</p>
             </div>
           </div>
 
           <!-- Size Comparison -->
-          <div class="grid grid-cols-2 gap-6 text-center">
-            <div class="space-y-2">
-              <div class="text-2xl font-bold">{{ originalSizeFormatted }}</div>
-              <div class="text-sm text-muted-foreground">Original Size</div>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="rounded-xl bg-muted/60 p-4 text-center">
+              <div class="text-2xl font-bold tabular-nums tracking-tight">{{ originalSizeFormatted }}</div>
+              <div class="mt-1 text-xs text-muted-foreground">Original</div>
             </div>
-            <div class="space-y-2">
-              <div class="text-2xl font-bold text-green-600">{{ compressedSizeFormatted }}</div>
-              <div class="text-sm text-muted-foreground">Compressed Size</div>
+            <div class="rounded-xl bg-success/10 p-4 text-center ring-1 ring-success/20">
+              <div class="text-2xl font-bold tabular-nums tracking-tight text-success">{{ compressedSizeFormatted }}</div>
+              <div class="mt-1 text-xs text-muted-foreground">Compressed</div>
             </div>
           </div>
 
           <!-- Reduction Stats -->
-          <div v-if="compressedSizeReduction > 0" class="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
-            <div class="flex items-center justify-between mb-2">
-              <span class="text-sm font-medium text-green-800 dark:text-green-200">Size Reduction</span>
-              <span class="text-lg font-bold text-green-600 dark:text-green-400">
+          <div v-if="compressedSizeReduction > 0">
+            <div class="mb-1.5 flex items-center justify-between text-xs text-muted-foreground">
+              <span>Size reduction</span>
+              <span class="text-sm font-bold tabular-nums text-success">
                 {{ Math.round(compressedSizeReduction) }}%
               </span>
             </div>
-            <div class="w-full bg-green-200 dark:bg-green-800 rounded-full h-2">
+            <div class="h-2 w-full overflow-hidden rounded-full bg-muted">
               <div
-                class="bg-green-500 h-2 rounded-full transition-all duration-500"
+                class="h-full rounded-full bg-gradient-to-r from-primary to-success transition-all duration-500"
                 :style="{ width: `${compressedSizeReduction}%` }"></div>
             </div>
           </div>
-          <div v-else class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-            <div class="flex items-start space-x-2">
-              <Icon icon="lucide:info" class="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5" />
+          <div v-else class="rounded-xl border border-warning/30 bg-warning/10 p-4">
+            <div class="flex items-start gap-3">
+              <Icon icon="lucide:info" class="mt-0.5 h-4.5 w-4.5 shrink-0 text-warning" />
               <div>
-                <h4 class="text-sm font-medium text-yellow-800 dark:text-yellow-200">Already Optimized</h4>
-                <p class="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
-                  This PDF is already highly optimized. We couldn't reduce its size further using structure compression.
+                <h4 class="text-sm font-semibold">Already optimized</h4>
+                <p class="mt-0.5 text-sm text-muted-foreground">
+                  This PDF is already highly optimized — we couldn't reduce its size further using structure
+                  compression.
                 </p>
               </div>
             </div>
@@ -251,12 +231,12 @@
         </div>
 
         <!-- Action Buttons -->
-        <div class="flex justify-center space-x-4">
+        <div class="flex justify-center gap-3">
           <Button variant="soft" @click="compressAnother">
             <Icon icon="lucide:plus" class="h-4 w-4" />
             Compress Another
           </Button>
-          <Button @click="downloadFile" class="min-w-32">
+          <Button @click="downloadFile" class="min-w-40 font-semibold">
             <Icon icon="lucide:download" class="h-4 w-4" />
             Download PDF
           </Button>

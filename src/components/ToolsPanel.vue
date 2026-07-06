@@ -287,7 +287,6 @@ import { Icon } from '@iconify/vue';
 import Button from '@/components/ui/Button.vue';
 import Slider from '@/components/ui/Slider.vue';
 import type { PDFFile } from '@/composables/usePDFTools';
-import * as JSZip from 'jszip';
 
 const tools = [
   { key: 'merge', title: 'Merge PDFs', description: 'Combine files into one', icon: 'lucide:file-plus' },
@@ -432,7 +431,8 @@ const handleSplitSelected = async () => {
     if (results.length === 1) {
       props.downloadBlob(results[0].blob, results[0].filename);
     } else if (results.length > 1) {
-      const zip = new JSZip.default();
+      const { default: JSZip } = await import('jszip');
+      const zip = new JSZip();
       for (const { blob, filename } of results) {
         zip.file(filename, blob);
       }

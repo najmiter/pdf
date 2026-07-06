@@ -10,14 +10,11 @@
               class="grid h-8 w-8 place-content-center rounded-lg bg-primary/15 ring-1 ring-primary/25 transition-transform duration-300 group-hover:scale-105">
               <img src="/icon.svg" width="18" height="18" alt="pdf tools logo" />
             </div>
-            <h1 class="text-lg font-semibold tracking-tight">
-              Pdf<span class="text-primary">Rizz</span>
-            </h1>
+            <h1 class="text-lg font-semibold tracking-tight">Pdf<span class="text-primary">Rizz</span></h1>
           </router-link>
 
           <!-- Navigation -->
-          <nav
-            class="flex items-center gap-1 rounded-full border border-border/60 bg-muted/50 p-1 text-sm font-medium">
+          <nav class="flex items-center gap-1 rounded-full border border-border/60 bg-muted/50 p-1 text-sm font-medium">
             <router-link
               to="/"
               class="rounded-full px-4 py-1.5 transition-all duration-200"
@@ -66,7 +63,7 @@
       </div>
     </header>
 
-    <div class="h-[calc(100svh-57px)]">
+    <div class="h-[calc(100svh-57px)] pt-4">
       <!-- Router View -->
       <router-view />
     </div>

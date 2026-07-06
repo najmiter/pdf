@@ -1,14 +1,17 @@
 import { ref, computed } from 'vue';
-import { PDFDocument, degrees } from 'pdf-lib';
-import JSZip from 'jszip';
 
 let pdfjsLib: any = null;
 const getPdfjsLib = async () => {
   if (!pdfjsLib) {
-    pdfjsLib = await import('pdfjs-dist');
+    const [lib, worker] = await Promise.all([import('pdfjs-dist'), import('pdfjs-dist/build/pdf.worker.min.mjs?url')]);
+    lib.GlobalWorkerOptions.workerSrc = worker.default;
+    pdfjsLib = lib;
   }
   return pdfjsLib;
 };
+
+const getPdfLib = () => import('pdf-lib');
+const getJSZip = async () => (await import('jszip')).default;
 
 export interface PDFFile {
   id: string;
@@ -253,6 +256,7 @@ export function usePDFTools() {
     startProcessing('merge', 'Preparing files...');
 
     try {
+      const { PDFDocument } = await getPdfLib();
       const mergedPdf = await PDFDocument.create();
       let processedPages = 0;
 
@@ -291,6 +295,7 @@ export function usePDFTools() {
     startProcessing('split', 'Preparing to split...');
 
     try {
+      const { PDFDocument } = await getPdfLib();
       const totalRanges = ranges.length;
       let processedRanges = 0;
       const splits: Blob[] = [];
@@ -330,6 +335,7 @@ export function usePDFTools() {
     startProcessing('split', 'Extracting pages...');
 
     try {
+      const { PDFDocument } = await getPdfLib();
       const results: { blob: Blob; filename: string }[] = [];
       const totalPages = [...pagesByFile.values()].reduce((sum, pages) => sum + pages.length, 0);
       let processedPages = 0;
@@ -399,6 +405,7 @@ export function usePDFTools() {
     startProcessing('remove', 'Analyzing pages...');
 
     try {
+      const { PDFDocument } = await getPdfLib();
       const arrayBuffer = await getArrayBuffer(file);
       const doc = await PDFDocument.load(arrayBuffer);
 
@@ -424,6 +431,7 @@ export function usePDFTools() {
     startProcessing('rotate', 'Preparing to rotate...');
 
     try {
+      const { PDFDocument, degrees } = await getPdfLib();
       const arrayBuffer = await getArrayBuffer(file);
       const doc = await PDFDocument.load(arrayBuffer);
 
@@ -449,6 +457,7 @@ export function usePDFTools() {
     startProcessing('insert', 'Preparing files...');
 
     try {
+      const { PDFDocument } = await getPdfLib();
       const originalFile = files.value.find((f) => f.id === originalFileId);
       const insertFile = files.value.find((f) => f.id === insertFileId);
       if (!originalFile || !insertFile) throw new Error('Files not found');
@@ -516,6 +525,7 @@ export function usePDFTools() {
     try {
       if (!context) throw new Error('Canvas context not available');
 
+      const JSZip = await getJSZip();
       const zip = new JSZip();
 
       let processedPages = 0;

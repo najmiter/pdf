@@ -1,14 +1,14 @@
 <template>
   <div class="flex flex-wrap gap-4" ref="containerRef">
     <PDFPagePreview
-      v-for="page in visiblePages"
-      :key="`${fileId}-${page.pageNumber}`"
-      :pageNumber="page.pageNumber"
+      v-for="pageNumber in visiblePages"
+      :key="`${fileId}-${pageNumber}`"
+      :pageNumber="pageNumber"
       :fileName="fileName"
       :pdfUrl="pdfUrl"
       :pdfDoc="pdfDoc"
-      :isSelected="page.isSelected"
-      @select="() => $emit('select', page.pageNumber)" />
+      :isSelected="selectedPages.has(`${fileId}:${pageNumber}`)"
+      @select="() => $emit('select', pageNumber)" />
 
     <!-- Sentinel element to trigger loading more pages -->
     <div v-if="hasMorePages && totalPages > 50" ref="sentinelRef" class="w-full h-10" aria-hidden="true"></div>
@@ -43,22 +43,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch, computed, nextTick } from 'vue';
+import { ref, onMounted, onUnmounted, computed, nextTick } from 'vue';
 import PDFPagePreview from './PDFPagePreview.vue';
 import { PDFMemoryManager } from '@/composables/usePDFTools';
-
-interface PageInfo {
-  pageNumber: number;
-  isSelected: boolean;
-}
 
 interface Props {
   fileId: string;
   fileName: string;
   pdfUrl: string;
   totalPages: number;
-  selectedPages: Set<number>;
-  getGlobalPageIndex: (fileId: string, pageNumber: number) => number;
+  selectedPages: Set<string>;
 }
 
 const props = defineProps<Props>();
@@ -71,7 +65,7 @@ defineEmits<{
 
 const containerRef = ref<HTMLElement>();
 const sentinelRef = ref<HTMLElement>();
-const visiblePages = ref<PageInfo[]>([]);
+const visiblePages = ref<number[]>([]);
 const batchSize = computed(() => {
   if (props.totalPages > 1000) return 15;
   if (props.totalPages > 500) return 20;
@@ -116,7 +110,7 @@ const setupIntersectionObserver = () => {
       root: null,
       rootMargin: '100px',
       threshold: 0.1,
-    }
+    },
   );
 
   intersectionObserver.observe(sentinelRef.value);
@@ -138,19 +132,15 @@ const loadBatch = async (batchIndex: number) => {
   const remainingCapacity = maxRenderedPages.value - visiblePages.value.length;
   const actualEndPage = Math.min(endPage, startPage + remainingCapacity - 1);
 
-  const newPages: PageInfo[] = [];
+  const existingPageNumbers = new Set(visiblePages.value);
+  const newPages: number[] = [];
   for (let pageNum = startPage; pageNum <= actualEndPage; pageNum++) {
-    const globalIndex = props.getGlobalPageIndex(props.fileId, pageNum);
-    newPages.push({
-      pageNumber: pageNum,
-      isSelected: props.selectedPages.has(globalIndex),
-    });
+    if (!existingPageNumbers.has(pageNum)) {
+      newPages.push(pageNum);
+    }
   }
 
-  const existingPageNumbers = new Set(visiblePages.value.map((p) => p.pageNumber));
-  const uniqueNewPages = newPages.filter((p) => !existingPageNumbers.has(p.pageNumber));
-
-  visiblePages.value = [...visiblePages.value, ...uniqueNewPages].sort((a, b) => a.pageNumber - b.pageNumber);
+  visiblePages.value = [...visiblePages.value, ...newPages].sort((a, b) => a - b);
   loadedBatches.value.add(batchIndex);
 
   if (isLoadingMore.value) {
@@ -182,15 +172,4 @@ onUnmounted(() => {
     clearTimeout(scrollTimeout);
   }
 });
-
-watch(
-  () => props.selectedPages,
-  () => {
-    visiblePages.value.forEach((page) => {
-      const globalIndex = props.getGlobalPageIndex(props.fileId, page.pageNumber);
-      page.isSelected = props.selectedPages.has(globalIndex);
-    });
-  },
-  { deep: true }
-);
 </script>

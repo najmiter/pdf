@@ -97,7 +97,6 @@
             :isFirstFile="index === 0"
             :showPreview="filePreviewStates[file.id]?.showPreview ?? index === 0"
             :selectedPages="selectedPages"
-            :getGlobalPageIndex="getGlobalPageIndex"
             @remove="removeFile(file.id)"
             @select="(pageNum) => togglePageSelection(file.id, pageNum)"
             @togglePreview="toggleFilePreview(file.id)"
@@ -143,7 +142,7 @@
       :isProcessing="isProcessing"
       :selectedPages="selectedPages"
       :mergePDFs="mergePDFs"
-      :splitPDF="splitPDF"
+      :extractPages="extractPages"
       :removePages="removePages"
       :insertPDF="insertPDF"
       :convertToImages="convertToImages"
@@ -205,11 +204,12 @@ const {
   addFiles,
   removeFile,
   mergePDFs,
-  splitPDF,
+  extractPages,
   removePages,
   insertPDF,
   convertToImages,
   downloadBlob,
+  cleanup,
 } = usePDFTools();
 
 const {
@@ -226,25 +226,21 @@ const isDragging = ref(false);
 const isCardReordering = ref(false);
 const dragCounter = ref(0);
 
-watch(
-  files,
-  (newFiles: PDFFile[], oldFiles) => {
-    newFiles.forEach((file: PDFFile, index: number) => {
-      const isNewFile = !oldFiles?.some((oldFile: PDFFile) => oldFile.id === file.id);
-      if (isNewFile) {
-        initializeFilePreview(file.id, index === 0);
-      }
-    });
+watch(files, (newFiles: PDFFile[], oldFiles) => {
+  newFiles.forEach((file: PDFFile, index: number) => {
+    const isNewFile = !oldFiles?.some((oldFile: PDFFile) => oldFile.id === file.id);
+    if (isNewFile) {
+      initializeFilePreview(file.id, index === 0);
+    }
+  });
 
-    oldFiles?.forEach((oldFile: PDFFile) => {
-      const stillExists = newFiles.some((file: PDFFile) => file.id === oldFile.id);
-      if (!stillExists) {
-        removeFilePreview(oldFile.id);
-      }
-    });
-  },
-  { deep: true },
-);
+  oldFiles?.forEach((oldFile: PDFFile) => {
+    const stillExists = newFiles.some((file: PDFFile) => file.id === oldFile.id);
+    if (!stillExists) {
+      removeFilePreview(oldFile.id);
+    }
+  });
+});
 
 const orderedFiles = computed(() => {
   const orderedIds = getOrderedFileIds();
@@ -318,34 +314,16 @@ const handleFileInput = (e: Event) => {
 };
 
 const clearAllFiles = () => {
-  files.value.forEach((file) => {
-    if (file.url) {
-      URL.revokeObjectURL(file.url);
-    }
-  });
-
-  files.value = [];
-  selectedPages.value.clear();
-};
-
-const getGlobalPageIndex = (fileId: string, pageNumber: number): number => {
-  let globalIndex = 0;
-  for (const file of files.value) {
-    if (file.id === fileId) {
-      return globalIndex + pageNumber;
-    }
-    globalIndex += file.pages;
-  }
-  return globalIndex;
+  cleanup();
 };
 
 const togglePageSelection = (fileId: string, pageNumber: number) => {
-  const globalIndex = getGlobalPageIndex(fileId, pageNumber);
+  const key = `${fileId}:${pageNumber}`;
 
-  if (selectedPages.value.has(globalIndex)) {
-    selectedPages.value.delete(globalIndex);
+  if (selectedPages.value.has(key)) {
+    selectedPages.value.delete(key);
   } else {
-    selectedPages.value.add(globalIndex);
+    selectedPages.value.add(key);
   }
 };
 
@@ -360,12 +338,10 @@ const handleProgress = (progress: number, step: string) => {
 
 const selectAllPages = () => {
   selectedPages.value.clear();
-  let globalIndex = 1;
 
   for (const file of files.value) {
     for (let page = 1; page <= file.pages; page++) {
-      selectedPages.value.add(globalIndex);
-      globalIndex++;
+      selectedPages.value.add(`${file.id}:${page}`);
     }
   }
 };
@@ -426,9 +402,9 @@ const handleFileDrop = (draggedFileId: string, targetFileId: string) => {
   }
 };
 
-const handleRangeSelect = (pagesToSelect: number[]) => {
+const handleRangeSelect = (fileId: string, pagesToSelect: number[]) => {
   pagesToSelect.forEach((pageNum) => {
-    selectedPages.value.add(pageNum);
+    selectedPages.value.add(`${fileId}:${pageNum}`);
   });
 };
 

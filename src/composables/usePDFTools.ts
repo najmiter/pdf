@@ -14,12 +14,9 @@ export interface PDFFile {
   id: string;
   name: string;
   file: File;
-  doc?: any;
-  arrayBuffer?: ArrayBuffer;
   url: string;
   pages: number;
   size: number;
-  thumbnail?: string;
 }
 
 export class PDFMemoryManager {
@@ -55,17 +52,13 @@ export class PDFMemoryManager {
 
   cleanupDocument(id: string): void {
     const doc = this.pdfDocuments.get(id);
-    if (doc && doc.cleanup) {
-      doc.cleanup();
-    }
+    doc?.destroy?.() ?? doc?.cleanup?.();
     this.pdfDocuments.delete(id);
   }
 
   cleanupAll(): void {
     for (const [, doc] of this.pdfDocuments) {
-      if (doc && doc.cleanup) {
-        doc.cleanup();
-      }
+      doc?.destroy?.() ?? doc?.cleanup?.();
     }
     this.pdfDocuments.clear();
 
@@ -87,7 +80,7 @@ export interface PageRange {
 
 export function usePDFTools() {
   const files = ref<PDFFile[]>([]);
-  const selectedPages = ref<Set<number>>(new Set());
+  const selectedPages = ref<Set<string>>(new Set());
   const isProcessing = ref(false);
   const currentTool = ref<string | null>(null);
   const processingProgress = ref<number | null>(null);
@@ -96,20 +89,13 @@ export function usePDFTools() {
   const memoryManager = PDFMemoryManager.getInstance();
 
   const isUltraLargeDocument = (pages: number) => pages > 1000;
-  const isGiantDocument = (pages: number) => pages > 2000;
 
   const getBatchSize = (pageCount: number) => {
-    if (isGiantDocument(pageCount)) return 1;
-    if (isUltraLargeDocument(pageCount)) return 2;
-    if (pageCount > 100) return 3;
-    return 5;
+    if (isUltraLargeDocument(pageCount)) return 10;
+    return 25;
   };
 
-  const getProcessingDelay = (pageCount: number) => {
-    if (isGiantDocument(pageCount)) return 50;
-    if (isUltraLargeDocument(pageCount)) return 20;
-    return 10;
-  };
+  const yieldToUI = () => new Promise((resolve) => setTimeout(resolve, 0));
 
   const shouldForceGC = (pageCount: number) => {
     return isUltraLargeDocument(pageCount) && (window as any).gc;
@@ -144,7 +130,6 @@ export function usePDFTools() {
     if (!pageIndices.length) return;
 
     const batchSize = getBatchSize(pageCount);
-    const delay = getProcessingDelay(pageCount);
 
     for (let i = 0; i < pageIndices.length; i += batchSize) {
       const batch = pageIndices.slice(i, i + batchSize);
@@ -157,7 +142,7 @@ export function usePDFTools() {
         targetPdf.addPage(page);
       });
 
-      await new Promise((resolve) => setTimeout(resolve, delay));
+      await yieldToUI();
 
       if (shouldForceGC(pageCount)) {
         (window as any).gc();
@@ -196,31 +181,30 @@ export function usePDFTools() {
   };
 
   const loadPDFFile = async (file: File): Promise<PDFFile> => {
-    try {
-      const url = URL.createObjectURL(file);
-      memoryManager.registerObjectUrl(url);
+    const url = URL.createObjectURL(file);
+    memoryManager.registerObjectUrl(url);
 
+    try {
       const lib = await getPdfjsLib();
       const pdfjsDoc = await lib.getDocument(url).promise;
       const pages = pdfjsDoc.numPages;
 
-      const fileId = Math.random().toString(36).substring(2, 9);
+      const fileId =
+        typeof crypto !== 'undefined' && crypto.randomUUID
+          ? crypto.randomUUID()
+          : Math.random().toString(36).substring(2, 11);
       memoryManager.cacheDocument(fileId, pdfjsDoc);
-
-      let doc: any = null;
 
       return {
         id: fileId,
         name: file.name,
         file,
-        doc,
-        arrayBuffer: undefined,
         url,
         pages,
         size: file.size,
       };
     } catch (error) {
-      // console.error('Error loading PDF:', error);
+      memoryManager.revokeObjectUrl(url);
       throw error;
     }
   };
@@ -232,24 +216,23 @@ export function usePDFTools() {
       const newFiles: PDFFile[] = [];
 
       for (const file of Array.from(fileList)) {
-        if (file.type === 'application/pdf') {
-          const pdfFile = await loadPDFFile(file);
-          newFiles.push(pdfFile);
+        if (file.type !== 'application/pdf') continue;
+        try {
+          newFiles.push(await loadPDFFile(file));
+        } catch (error) {
+          console.error(`Failed to load ${file.name}:`, error);
         }
       }
 
-      files.value = [...files.value, ...newFiles];
+      if (newFiles.length > 0) {
+        files.value = [...files.value, ...newFiles];
+      }
     } finally {
       finishProcessing();
     }
   };
 
-  const getArrayBuffer = async (file: PDFFile): Promise<ArrayBuffer> => {
-    if (!file.arrayBuffer) {
-      file.arrayBuffer = await file.file.arrayBuffer();
-    }
-    return file.arrayBuffer;
-  };
+  const getArrayBuffer = (file: PDFFile): Promise<ArrayBuffer> => file.file.arrayBuffer();
 
   const removeFile = (fileId: string) => {
     const file = files.value.find((f) => f.id === fileId);
@@ -257,8 +240,10 @@ export function usePDFTools() {
       memoryManager.revokeObjectUrl(file.url);
       memoryManager.cleanupDocument(file.id);
 
-      if (file.arrayBuffer) {
-        file.arrayBuffer = undefined;
+      for (const key of selectedPages.value) {
+        if (key.startsWith(`${fileId}:`)) {
+          selectedPages.value.delete(key);
+        }
       }
     }
     files.value = files.value.filter((f) => f.id !== fileId);
@@ -267,35 +252,36 @@ export function usePDFTools() {
   const mergePDFs = async (selectedFileIds: string[]): Promise<Blob> => {
     startProcessing('merge', 'Preparing files...');
 
-    const mergedPdf = await PDFDocument.create();
-    let processedPages = 0;
+    try {
+      const mergedPdf = await PDFDocument.create();
+      let processedPages = 0;
 
-    const totalPages = selectedFileIds.reduce((sum, id) => {
-      const file = files.value.find((f) => f.id === id);
-      return sum + (file ? file.pages : 0);
-    }, 0);
+      const totalPages = selectedFileIds.reduce((sum, id) => {
+        const file = files.value.find((f) => f.id === id);
+        return sum + (file ? file.pages : 0);
+      }, 0);
 
-    for (const fileId of selectedFileIds) {
-      const file = files.value.find((f) => f.id === fileId);
-      if (file) {
-        processingStep.value = `Processing ${file.name}...`;
+      for (const fileId of selectedFileIds) {
+        const file = files.value.find((f) => f.id === fileId);
+        if (file) {
+          processingStep.value = `Processing ${file.name}...`;
 
-        const arrayBuffer = await getArrayBuffer(file);
-        const doc = await PDFDocument.load(arrayBuffer);
-        const pageIndices = doc.getPageIndices();
+          const arrayBuffer = await getArrayBuffer(file);
+          const doc = await PDFDocument.load(arrayBuffer);
+          const pageIndices = doc.getPageIndices();
 
-        await processBatch(doc, mergedPdf, pageIndices, totalPages);
-        processedPages += pageIndices.length;
-        if (totalPages > 0) {
-          const progress = (processedPages / totalPages) * 90;
-          processingProgress.value = progress;
+          await processBatch(doc, mergedPdf, pageIndices, totalPages);
+          processedPages += pageIndices.length;
+          if (totalPages > 0) {
+            processingProgress.value = (processedPages / totalPages) * 90;
+          }
         }
       }
-    }
 
-    const result = await finalizePDF(mergedPdf);
-    finishProcessing();
-    return result;
+      return await finalizePDF(mergedPdf);
+    } finally {
+      finishProcessing();
+    }
   };
 
   const splitPDF = async (fileId: string, ranges: PageRange[]): Promise<Blob[]> => {
@@ -304,30 +290,106 @@ export function usePDFTools() {
 
     startProcessing('split', 'Preparing to split...');
 
-    const totalRanges = ranges.length;
-    let processedRanges = 0;
-    const splits: Blob[] = [];
+    try {
+      const totalRanges = ranges.length;
+      let processedRanges = 0;
+      const splits: Blob[] = [];
 
-    const arrayBuffer = await getArrayBuffer(file);
-    const doc = await PDFDocument.load(arrayBuffer);
+      const arrayBuffer = await getArrayBuffer(file);
+      const doc = await PDFDocument.load(arrayBuffer);
 
-    for (const range of ranges) {
-      const newPdf = await PDFDocument.create();
-      const pageIndices = Array.from({ length: range.end - range.start + 1 }, (_, i) => range.start - 1 + i);
+      for (const range of ranges) {
+        const newPdf = await PDFDocument.create();
+        const pageIndices = Array.from({ length: range.end - range.start + 1 }, (_, i) => range.start - 1 + i);
 
-      processingStep.value = `Processing pages ${range.start}-${range.end}...`;
-      await processBatch(doc, newPdf, pageIndices, file.pages);
+        processingStep.value = `Processing pages ${range.start}-${range.end}...`;
+        await processBatch(doc, newPdf, pageIndices, file.pages);
 
-      const pdfBytes = await newPdf.save();
-      splits.push(new Blob([new Uint8Array(pdfBytes)], { type: 'application/pdf' }));
+        const pdfBytes = await newPdf.save();
+        splits.push(new Blob([new Uint8Array(pdfBytes)], { type: 'application/pdf' }));
 
-      processedRanges++;
-      const progress = (processedRanges / totalRanges) * 100;
-      processingProgress.value = progress;
+        processedRanges++;
+        processingProgress.value = (processedRanges / totalRanges) * 100;
+      }
+
+      return splits;
+    } finally {
+      finishProcessing();
     }
+  };
 
-    finishProcessing();
-    return splits;
+  /**
+   * Extract pages (1-based, grouped by file) into either one merged PDF or
+   * one PDF per page. Loads each source document exactly once and saves the
+   * merged output exactly once.
+   */
+  const extractPages = async (
+    pagesByFile: Map<string, number[]>,
+    mode: 'merged' | 'separate',
+  ): Promise<{ blob: Blob; filename: string }[]> => {
+    startProcessing('split', 'Extracting pages...');
+
+    try {
+      const results: { blob: Blob; filename: string }[] = [];
+      const totalPages = [...pagesByFile.values()].reduce((sum, pages) => sum + pages.length, 0);
+      let processedPages = 0;
+
+      if (mode === 'merged') {
+        const mergedPdf = await PDFDocument.create();
+
+        for (const [fileId, pages] of pagesByFile) {
+          const file = files.value.find((f) => f.id === fileId);
+          if (!file) continue;
+
+          processingStep.value = `Extracting from ${file.name}...`;
+          const doc = await PDFDocument.load(await getArrayBuffer(file));
+          const copied = await mergedPdf.copyPages(
+            doc,
+            pages.map((p) => p - 1),
+          );
+          copied.forEach((page) => mergedPdf.addPage(page));
+
+          processedPages += pages.length;
+          processingProgress.value = (processedPages / totalPages) * 90;
+          await yieldToUI();
+        }
+
+        const blob = await finalizePDF(mergedPdf);
+        results.push({
+          blob,
+          filename: totalPages === 1 ? 'extracted_page.pdf' : `extracted_${totalPages}_pages.pdf`,
+        });
+      } else {
+        for (const [fileId, pages] of pagesByFile) {
+          const file = files.value.find((f) => f.id === fileId);
+          if (!file) continue;
+
+          const doc = await PDFDocument.load(await getArrayBuffer(file));
+          const baseName = file.name.replace(/\.pdf$/i, '');
+
+          for (const pageNum of pages) {
+            const newPdf = await PDFDocument.create();
+            const [page] = await newPdf.copyPages(doc, [pageNum - 1]);
+            newPdf.addPage(page);
+
+            const pdfBytes = await newPdf.save();
+            results.push({
+              blob: new Blob([new Uint8Array(pdfBytes)], { type: 'application/pdf' }),
+              filename: `${baseName}_page_${pageNum}.pdf`,
+            });
+
+            processedPages++;
+            processingProgress.value = (processedPages / totalPages) * 100;
+            processingStep.value = `Extracting page ${processedPages} of ${totalPages}...`;
+            await yieldToUI();
+          }
+        }
+      }
+
+      return results;
+    } finally {
+      finishProcessing();
+    }
   };
 
   const removePages = async (fileId: string, pagesToRemove: number[]): Promise<Blob> => {
@@ -336,21 +398,23 @@ export function usePDFTools() {
 
     startProcessing('remove', 'Analyzing pages...');
 
-    const arrayBuffer = await getArrayBuffer(file);
-    const doc = await PDFDocument.load(arrayBuffer);
+    try {
+      const arrayBuffer = await getArrayBuffer(file);
+      const doc = await PDFDocument.load(arrayBuffer);
 
-    const allPages = Array.from({ length: file.pages }, (_, i) => i);
-    const pagesToKeep = allPages.filter((page) => !pagesToRemove.includes(page + 1));
+      const removeSet = new Set(pagesToRemove);
+      const pagesToKeep = Array.from({ length: file.pages }, (_, i) => i).filter((page) => !removeSet.has(page + 1));
 
-    processingProgress.value = 50;
-    processingStep.value = 'Copying remaining pages...';
+      processingProgress.value = 50;
+      processingStep.value = 'Copying remaining pages...';
 
-    const newPdf = await PDFDocument.create();
-    await processBatch(doc, newPdf, pagesToKeep, file.pages);
+      const newPdf = await PDFDocument.create();
+      await processBatch(doc, newPdf, pagesToKeep, file.pages);
 
-    const result = await finalizePDF(newPdf);
-    finishProcessing();
-    return result;
+      return await finalizePDF(newPdf);
+    } finally {
+      finishProcessing();
+    }
   };
 
   const rotatePage = async (fileId: string, pageIndex: number, rotation: number): Promise<Blob> => {
@@ -359,36 +423,21 @@ export function usePDFTools() {
 
     startProcessing('rotate', 'Preparing to rotate...');
 
-    const arrayBuffer = await getArrayBuffer(file);
-    const doc = await PDFDocument.load(arrayBuffer);
+    try {
+      const arrayBuffer = await getArrayBuffer(file);
+      const doc = await PDFDocument.load(arrayBuffer);
 
-    const newPdf = await PDFDocument.create();
-    const pageIndices = doc.getPageIndices();
-
-    const batchSize = getBatchSize(file.pages);
-    const delay = getProcessingDelay(file.pages);
-
-    for (let i = 0; i < pageIndices.length; i += batchSize) {
-      const batch = pageIndices.slice(i, i + batchSize);
-      const pages = await newPdf.copyPages(doc, batch);
-
-      pages.forEach((page: any, idx: number) => {
-        if (pageIndices[i + idx] === pageIndex) {
+      const newPdf = await PDFDocument.create();
+      await processBatch(doc, newPdf, doc.getPageIndices(), file.pages, (page, index) => {
+        if (index === pageIndex) {
           page.setRotation(degrees(rotation));
         }
-        newPdf.addPage(page);
       });
 
-      await new Promise((resolve) => setTimeout(resolve, delay));
-
-      if (shouldForceGC(file.pages)) {
-        (window as any).gc();
-      }
+      return await finalizePDF(newPdf);
+    } finally {
+      finishProcessing();
     }
-
-    const result = await finalizePDF(newPdf);
-    finishProcessing();
-    return result;
   };
 
   const insertPDF = async (
@@ -399,58 +448,57 @@ export function usePDFTools() {
   ): Promise<Blob> => {
     startProcessing('insert', 'Preparing files...');
 
-    const originalFile = files.value.find((f) => f.id === originalFileId);
-    const insertFile = files.value.find((f) => f.id === insertFileId);
-    if (!originalFile || !insertFile) throw new Error('Files not found');
+    try {
+      const originalFile = files.value.find((f) => f.id === originalFileId);
+      const insertFile = files.value.find((f) => f.id === insertFileId);
+      if (!originalFile || !insertFile) throw new Error('Files not found');
 
-    if (insertAtPage < 1 || insertAtPage > originalFile.pages + 1) {
-      throw new Error('Invalid insertion point');
-    }
-
-    const originalArrayBuffer = await getArrayBuffer(originalFile);
-    const originalDoc = await PDFDocument.load(originalArrayBuffer);
-
-    const insertArrayBuffer = await getArrayBuffer(insertFile);
-    const insertDoc = await PDFDocument.load(insertArrayBuffer);
-
-    const mergedPdf = await PDFDocument.create();
-
-    const firstHalfIndices = Array.from({ length: insertAtPage - 1 }, (_, i) => i);
-    if (firstHalfIndices.length > 0) {
-      await processBatch(originalDoc, mergedPdf, firstHalfIndices, originalFile.pages);
-    }
-
-    processingProgress.value = 25;
-    processingStep.value = 'Inserting pages...';
-
-    let insertPages: number[];
-    if (ranges && ranges.length > 0) {
-      insertPages = [];
-      for (const range of ranges) {
-        for (let p = range.start; p <= range.end; p++) {
-          insertPages.push(p - 1);
-        }
+      if (insertAtPage < 1 || insertAtPage > originalFile.pages + 1) {
+        throw new Error('Invalid insertion point');
       }
-    } else {
-      insertPages = insertDoc.getPageIndices();
+
+      const originalDoc = await PDFDocument.load(await getArrayBuffer(originalFile));
+      const insertDoc = await PDFDocument.load(await getArrayBuffer(insertFile));
+
+      const mergedPdf = await PDFDocument.create();
+
+      const firstHalfIndices = Array.from({ length: insertAtPage - 1 }, (_, i) => i);
+      if (firstHalfIndices.length > 0) {
+        await processBatch(originalDoc, mergedPdf, firstHalfIndices, originalFile.pages);
+      }
+
+      processingProgress.value = 25;
+      processingStep.value = 'Inserting pages...';
+
+      let insertPages: number[];
+      if (ranges && ranges.length > 0) {
+        insertPages = [];
+        for (const range of ranges) {
+          for (let p = range.start; p <= range.end; p++) {
+            insertPages.push(p - 1);
+          }
+        }
+      } else {
+        insertPages = insertDoc.getPageIndices();
+      }
+
+      await processBatch(insertDoc, mergedPdf, insertPages, insertFile.pages);
+
+      processingProgress.value = 75;
+      processingStep.value = 'Adding remaining pages...';
+
+      const secondHalfIndices = Array.from(
+        { length: originalFile.pages - insertAtPage + 1 },
+        (_, i) => insertAtPage - 1 + i,
+      );
+      if (secondHalfIndices.length > 0) {
+        await processBatch(originalDoc, mergedPdf, secondHalfIndices, originalFile.pages);
+      }
+
+      return await finalizePDF(mergedPdf);
+    } finally {
+      finishProcessing();
     }
-
-    await processBatch(insertDoc, mergedPdf, insertPages, insertFile.pages);
-
-    processingProgress.value = 75;
-    processingStep.value = 'Adding remaining pages...';
-
-    const secondHalfIndices = Array.from(
-      { length: originalFile.pages - insertAtPage + 1 },
-      (_, i) => insertAtPage - 1 + i,
-    );
-    if (secondHalfIndices.length > 0) {
-      await processBatch(originalDoc, mergedPdf, secondHalfIndices, originalFile.pages);
-    }
-
-    const result = await finalizePDF(mergedPdf);
-    finishProcessing();
-    return result;
   };
 
   const convertToImages = async (
@@ -462,83 +510,69 @@ export function usePDFTools() {
 
     startProcessing('convert', 'Preparing conversion...');
 
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+
     try {
+      if (!context) throw new Error('Canvas context not available');
+
       const zip = new JSZip();
 
-      let globalIndex = 1;
       let processedPages = 0;
       const totalPages = selectedPages.value.size;
 
       for (const file of files.value) {
         const filePages: number[] = [];
         for (let page = 1; page <= file.pages; page++) {
-          if (selectedPages.value.has(globalIndex)) {
+          if (selectedPages.value.has(`${file.id}:${page}`)) {
             filePages.push(page);
           }
-          globalIndex++;
         }
+        if (filePages.length === 0) continue;
 
-        if (filePages.length > 0) {
-          const pdf = memoryManager.getDocument(file.id);
+        const pdf = memoryManager.getDocument(file.id);
+        if (!pdf) continue;
 
-          for (const pageNum of filePages) {
-            try {
-              const page = await pdf.getPage(pageNum);
+        for (const pageNum of filePages) {
+          try {
+            const page = await pdf.getPage(pageNum);
 
-              const scale = totalPages > 50 ? 1.0 : 1.5;
-              const viewport = page.getViewport({ scale });
+            const scale = totalPages > 50 ? 1.0 : 1.5;
+            const viewport = page.getViewport({ scale });
 
-              const canvas = document.createElement('canvas');
-              const context = canvas.getContext('2d');
-              if (!context) throw new Error('Canvas context not available');
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
 
-              canvas.height = viewport.height;
-              canvas.width = viewport.width;
+            context.fillStyle = 'white';
+            context.fillRect(0, 0, canvas.width, canvas.height);
 
-              context.fillStyle = 'white';
-              context.fillRect(0, 0, canvas.width, canvas.height);
+            await page.render({ canvasContext: context, viewport, canvas }).promise;
 
-              const renderContext = {
-                canvasContext: context,
-                viewport: viewport,
-                canvas: canvas,
-              };
+            const blob = await new Promise<Blob>((resolve, reject) => {
+              canvas.toBlob(
+                (b) => {
+                  if (b) resolve(b);
+                  else reject(new Error('Failed to create blob'));
+                },
+                format === 'jpeg' ? 'image/jpeg' : 'image/png',
+                quality,
+              );
+            });
 
-              await page.render(renderContext).promise;
+            const filename = `${file.name.replace(/\.pdf$/i, '')}_page_${pageNum}.${format}`;
+            zip.file(filename, blob);
+            processedPages++;
 
-              const blob = await new Promise<Blob>((resolve, reject) => {
-                canvas.toBlob(
-                  (b) => {
-                    if (b) resolve(b);
-                    else reject(new Error('Failed to create blob'));
-                  },
-                  format === 'jpeg' ? 'image/jpeg' : 'image/png',
-                  quality,
-                );
-              });
+            const progress = (processedPages / totalPages) * 100;
+            const currentStep = `Processing page ${processedPages} of ${totalPages}`;
+            onProgress?.(progress, currentStep);
+            processingProgress.value = progress;
+            processingStep.value = currentStep;
 
-              context.clearRect(0, 0, canvas.width, canvas.height);
-              canvas.width = 0;
-              canvas.height = 0;
-              canvas.remove();
-
-              const filename = `${file.name.replace('.pdf', '')}_page_${pageNum}.${format}`;
-              zip?.file(filename, blob);
-              processedPages++;
-
-              const progress = (processedPages / totalPages) * 100;
-              const currentStep = `Processing page ${processedPages} of ${totalPages}`;
-              onProgress?.(progress, currentStep);
-              processingProgress.value = progress;
-              processingStep.value = currentStep;
-
-              await new Promise((resolve) => setTimeout(resolve, 50));
-            } catch (error) {
-              // console.error(`Error processing page ${pageNum} of ${file.name}:`, error);
-            }
+            await yieldToUI();
+          } catch (error) {
+            console.error(`Error converting page ${pageNum} of ${file.name}:`, error);
           }
-
-          pdf.cleanup();
         }
       }
 
@@ -554,10 +588,9 @@ export function usePDFTools() {
       processingStep.value = 'Download starting...';
 
       downloadBlob(zipBlob, zipFilename);
-    } catch (error) {
-      // console.error('Error converting to images:', error);
-      throw error;
     } finally {
+      canvas.width = 0;
+      canvas.height = 0;
       finishProcessing();
     }
   };
@@ -570,7 +603,8 @@ export function usePDFTools() {
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    // defer revocation so slower browsers finish reading the blob first
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
 
   const cleanup = () => {
@@ -592,6 +626,7 @@ export function usePDFTools() {
     removeFile,
     mergePDFs,
     splitPDF,
+    extractPages,
     removePages,
     rotatePage,
     insertPDF,

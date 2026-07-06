@@ -28,9 +28,7 @@
           <div
             :class="[
               'grid h-9 w-9 shrink-0 place-content-center rounded-lg ring-1 transition-colors duration-200',
-              tool.key === 'remove'
-                ? 'bg-destructive/10 ring-destructive/20'
-                : 'bg-primary/12 ring-primary/20',
+              tool.key === 'remove' ? 'bg-destructive/10 ring-destructive/20' : 'bg-primary/12 ring-primary/20',
             ]">
             <Icon
               :icon="tool.icon"
@@ -60,7 +58,9 @@
         <div v-if="openTool === tool.key" class="space-y-4 border-t border-border/60 p-3.5 animate-fade-in">
           <!-- Merge -->
           <template v-if="tool.key === 'merge'">
-            <p v-if="files.length < 2" class="rounded-lg border border-dashed border-border px-3 py-3 text-center text-xs text-muted-foreground">
+            <p
+              v-if="files.length < 2"
+              class="rounded-lg border border-dashed border-border px-3 py-3 text-center text-xs text-muted-foreground">
               Add at least 2 files to merge
             </p>
             <Button
@@ -115,7 +115,9 @@
                 <span v-else>Extract Pages Separately</span>
               </Button>
             </div>
-            <p v-else class="rounded-lg border border-dashed border-border px-3 py-3 text-center text-xs text-muted-foreground">
+            <p
+              v-else
+              class="rounded-lg border border-dashed border-border px-3 py-3 text-center text-xs text-muted-foreground">
               Click pages in the preview to select them
             </p>
           </template>
@@ -138,7 +140,9 @@
                 Remove Selected Pages
               </Button>
             </div>
-            <p v-else class="rounded-lg border border-dashed border-border px-3 py-3 text-center text-xs text-muted-foreground">
+            <p
+              v-else
+              class="rounded-lg border border-dashed border-border px-3 py-3 text-center text-xs text-muted-foreground">
               Click pages in the preview to select them
             </p>
           </template>
@@ -188,7 +192,9 @@
                 Download as {{ imageFormat.toUpperCase() }} ZIP
               </Button>
             </div>
-            <p v-else class="rounded-lg border border-dashed border-border px-3 py-3 text-center text-xs text-muted-foreground">
+            <p
+              v-else
+              class="rounded-lg border border-dashed border-border px-3 py-3 text-center text-xs text-muted-foreground">
               Click pages in the preview to select them
             </p>
           </template>
@@ -221,7 +227,9 @@
               </div>
 
               <div class="space-y-1.5">
-                <label class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Insert at page</label>
+                <label class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                  >Insert at page</label
+                >
                 <input
                   v-model.number="insertAtPage"
                   type="number"
@@ -253,7 +261,9 @@
                 Insert PDF &amp; Download
               </Button>
             </div>
-            <p v-else class="rounded-lg border border-dashed border-border px-3 py-3 text-center text-xs text-muted-foreground">
+            <p
+              v-else
+              class="rounded-lg border border-dashed border-border px-3 py-3 text-center text-xs text-muted-foreground">
               Upload at least 2 PDFs to use this tool
             </p>
           </template>
@@ -303,7 +313,13 @@ const tools = [
     needsSelection: true,
   },
   { key: 'insert', title: 'Insert PDF', description: 'Place one PDF inside another', icon: 'lucide:plus' },
-  { key: 'compress', title: 'Compress PDF', description: 'Reduce PDF file size', icon: 'lucide:zap', route: '/compress' },
+  {
+    key: 'compress',
+    title: 'Compress PDF',
+    description: 'Reduce PDF file size',
+    icon: 'lucide:zap',
+    route: '/compress',
+  },
 ] as { key: string; title: string; description: string; icon: string; needsSelection?: boolean; route?: string }[];
 
 const fieldClass =
@@ -312,20 +328,23 @@ const fieldClass =
 interface Props {
   files: PDFFile[];
   isProcessing: boolean;
-  selectedPages: Set<number>;
+  selectedPages: Set<string>;
   mergePDFs: (fileIds: string[]) => Promise<Blob>;
-  splitPDF: (fileId: string, ranges: { start: number; end: number }[]) => Promise<Blob[]>;
+  extractPages: (
+    pagesByFile: Map<string, number[]>,
+    mode: 'merged' | 'separate',
+  ) => Promise<{ blob: Blob; filename: string }[]>;
   removePages: (fileId: string, pages: number[]) => Promise<Blob>;
   insertPDF: (
     originalFileId: string,
     insertFileId: string,
     insertAtPage: number,
-    ranges?: { start: number; end: number }[]
+    ranges?: { start: number; end: number }[],
   ) => Promise<Blob>;
   convertToImages: (
     format?: 'png' | 'jpeg',
     quality?: number,
-    onProgress?: (progress: number, step: string) => void
+    onProgress?: (progress: number, step: string) => void,
   ) => Promise<void>;
   downloadBlob: (blob: Blob, filename: string) => void;
 }
@@ -375,136 +394,73 @@ const handleMerge = async () => {
   try {
     const mergedBlob = await props.mergePDFs(props.files.map((f) => f.id));
     props.downloadBlob(mergedBlob, 'merged.pdf');
-  } catch (error) {}
+  } catch (error) {
+    console.error('Failed to merge PDFs:', error);
+  }
+};
+
+const getSelectedPagesByFile = (): Map<string, number[]> => {
+  const pagesByFile = new Map<string, number[]>();
+
+  for (const file of props.files) {
+    const filePages: number[] = [];
+    for (const key of props.selectedPages) {
+      const separatorIndex = key.lastIndexOf(':');
+      if (key.slice(0, separatorIndex) === file.id) {
+        filePages.push(Number(key.slice(separatorIndex + 1)));
+      }
+    }
+    if (filePages.length > 0) {
+      pagesByFile.set(
+        file.id,
+        filePages.sort((a, b) => a - b),
+      );
+    }
+  }
+
+  return pagesByFile;
 };
 
 const handleSplitSelected = async () => {
   if (props.selectedPages.size === 0) return;
 
   try {
-    const pagesByFile = new Map<string, number[]>();
+    const pagesByFile = getSelectedPagesByFile();
+    const mode = props.selectedPages.size > 1 && splitMergeOption.value === 'separate' ? 'separate' : 'merged';
+    const results = await props.extractPages(pagesByFile, mode);
 
-    let globalIndex = 1;
-    for (const file of props.files) {
-      const filePages: number[] = [];
-      for (let page = 1; page <= file.pages; page++) {
-        if (props.selectedPages.has(globalIndex)) {
-          filePages.push(page);
-        }
-        globalIndex++;
-      }
-      if (filePages.length > 0) {
-        pagesByFile.set(file.id, filePages);
-      }
-    }
-
-    // each page separately
-    if (splitMergeOption.value === 'merged' && props.selectedPages.size > 1) {
-      const allPageBlobs: Blob[] = [];
-      const selectedPageInfo: string[] = [];
-
-      for (const [fileId, pages] of pagesByFile) {
-        const file = props.files.find((f) => f.id === fileId);
-        if (file) {
-          const ranges = pages.map((p) => ({ start: p, end: p }));
-          const splitBlobs = await props.splitPDF(fileId, ranges);
-
-          splitBlobs.forEach((blob, index) => {
-            allPageBlobs.push(blob);
-            selectedPageInfo.push(`${file.name.replace('.pdf', '')}_page_${pages[index]}`);
-          });
-        }
-      }
-
-      if (allPageBlobs.length > 0) {
-        const { PDFDocument } = await import('pdf-lib');
-        const mergedPdf = await PDFDocument.create();
-
-        for (const blob of allPageBlobs) {
-          const arrayBuffer = await blob.arrayBuffer();
-          const sourcePdf = await PDFDocument.load(arrayBuffer);
-          const [page] = await mergedPdf.copyPages(sourcePdf, [0]);
-          mergedPdf.addPage(page);
-        }
-
-        const mergedBytes = await mergedPdf.save();
-        const mergedBlob = new Blob([new Uint8Array(mergedBytes)], { type: 'application/pdf' });
-
-        const filename =
-          selectedPageInfo.length > 1
-            ? `merged_selected_pages_${selectedPageInfo.length}_pages.pdf`
-            : `${selectedPageInfo[0]}.pdf`;
-
-        props.downloadBlob(mergedBlob, filename);
-      }
-    } else if (splitMergeOption.value === 'separate' && props.selectedPages.size > 1) {
+    if (results.length === 1) {
+      props.downloadBlob(results[0].blob, results[0].filename);
+    } else if (results.length > 1) {
       const zip = new JSZip.default();
-
-      for (const [fileId, pages] of pagesByFile) {
-        const file = props.files.find((f) => f.id === fileId);
-        if (file) {
-          const ranges = pages.map((p) => ({ start: p, end: p }));
-          const splitBlobs = await props.splitPDF(fileId, ranges);
-
-          splitBlobs.forEach((blob, index) => {
-            const filename = `${file.name.replace('.pdf', '')}_page_${pages[index]}.pdf`;
-            zip?.file(filename, blob);
-          });
-        }
+      for (const { blob, filename } of results) {
+        zip.file(filename, blob);
       }
-
       const zipBlob = await zip.generateAsync({ type: 'blob' });
-      const zipFilename = `splitted_pdfs.zip`;
-      props.downloadBlob(zipBlob, zipFilename);
-    } else {
-      for (const [fileId, pages] of pagesByFile) {
-        const file = props.files.find((f) => f.id === fileId);
-        if (file) {
-          const ranges = pages.map((p) => ({ start: p, end: p }));
-          const splitBlobs = await props.splitPDF(fileId, ranges);
-
-          splitBlobs.forEach((blob, index) => {
-            const filename =
-              pages.length === 1
-                ? `${file.name.replace('.pdf', '')}_page_${pages[index]}.pdf`
-                : `${file.name.replace('.pdf', '')}_pages_${pages.join('-')}.pdf`;
-            props.downloadBlob(blob, filename);
-          });
-        }
-      }
+      props.downloadBlob(zipBlob, 'extracted_pages.zip');
     }
-  } catch (error) {}
+  } catch (error) {
+    console.error('Failed to extract pages:', error);
+  }
 };
 
 const handleRemoveSelected = async () => {
   if (props.selectedPages.size === 0) return;
 
   try {
-    const pagesByFile = new Map<string, number[]>();
-
-    let globalIndex = 1;
-    for (const file of props.files) {
-      const filePages: number[] = [];
-      for (let page = 1; page <= file.pages; page++) {
-        if (props.selectedPages.has(globalIndex)) {
-          filePages.push(page);
-        }
-        globalIndex++;
-      }
-      if (filePages.length > 0) {
-        pagesByFile.set(file.id, filePages);
-      }
-    }
+    const pagesByFile = getSelectedPagesByFile();
 
     for (const [fileId, pagesToRemove] of pagesByFile) {
       const file = props.files.find((f) => f.id === fileId);
       if (file) {
         const resultBlob = await props.removePages(fileId, pagesToRemove);
-        const filename = `${file.name.replace('.pdf', '')}_removed_pages.pdf`;
+        const filename = `${file.name.replace(/\.pdf$/i, '')}_removed_pages.pdf`;
         props.downloadBlob(resultBlob, filename);
       }
     }
-  } catch (error) {}
+  } catch (error) {
+    console.error('Failed to remove pages:', error);
+  }
 };
 
 const handleConvertToImages = async () => {
@@ -533,7 +489,7 @@ const handleInsertPDF = async () => {
       insertOriginalFileId.value,
       insertFileId.value,
       insertAtPage.value,
-      ranges
+      ranges,
     );
 
     const originalFile = props.files.find((f) => f.id === insertOriginalFileId.value);

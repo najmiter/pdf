@@ -3,7 +3,9 @@
     ref="cardRef"
     :class="[
       'relative rounded-2xl border bg-card p-4 shadow-sm transition-all duration-200 cursor-move',
-      isDragging ? 'border-primary/60 bg-primary/5 scale-[1.01] shadow-lg' : 'border-border/70 hover:border-primary/30 hover:shadow-md',
+      isDragging
+        ? 'border-primary/60 bg-primary/5 scale-[1.01] shadow-lg'
+        : 'border-border/70 hover:border-primary/30 hover:shadow-md',
       isDragOver ? 'border-dashed border-primary bg-primary/5' : '',
     ]"
     draggable="true"
@@ -94,11 +96,7 @@
             <p v-else class="text-xs text-muted-foreground">Comma-separated pages or ranges</p>
           </div>
           <div class="flex gap-2">
-            <Button
-              type="button"
-              @click="applyRangeSelection"
-              :disabled="!rangeInput.trim() || !!rangeError"
-              size="sm">
+            <Button type="button" @click="applyRangeSelection" :disabled="!rangeInput.trim() || !!rangeError" size="sm">
               Select
             </Button>
             <Button type="button" @click="clearRangeSelection" variant="soft" size="sm"> Clear </Button>
@@ -115,7 +113,6 @@
         :pdfUrl="file.url"
         :totalPages="file.pages"
         :selectedPages="selectedPages"
-        :getGlobalPageIndex="getGlobalPageIndex"
         @select="(pageNum) => $emit('select', pageNum)" />
     </div>
   </div>
@@ -140,8 +137,7 @@ interface Props {
   file: PDFFile;
   isFirstFile: boolean;
   showPreview: boolean;
-  selectedPages: Set<number>;
-  getGlobalPageIndex: (fileId: string, pageNumber: number) => number;
+  selectedPages: Set<string>;
   dragData?: string;
 }
 
@@ -154,7 +150,7 @@ const emit = defineEmits<{
   dragStart: [fileId: string];
   dragEnd: [fileId: string];
   drop: [draggedFileId: string, targetFileId: string];
-  rangeSelect: [selectedPages: number[]];
+  rangeSelect: [fileId: string, selectedPages: number[]];
   rangeClear: [];
 }>();
 
@@ -229,7 +225,7 @@ const validateRange = () => {
   try {
     const ranges = parsePageRange(input);
     const validRanges = ranges.filter(
-      (range) => range.start >= 1 && range.end <= props.file.pages && range.start <= range.end
+      (range) => range.start >= 1 && range.end <= props.file.pages && range.start <= range.end,
     );
 
     if (validRanges.length !== ranges.length) {
@@ -274,12 +270,11 @@ const applyRangeSelection = () => {
 
     for (const range of ranges) {
       for (let page = range.start; page <= range.end; page++) {
-        const globalIndex = props.getGlobalPageIndex(props.file.id, page);
-        selectedPages.push(globalIndex);
+        selectedPages.push(page);
       }
     }
 
-    emit('rangeSelect', selectedPages);
+    emit('rangeSelect', props.file.id, selectedPages);
     showRangeSelector.value = false;
     rangeInput.value = '';
     rangeError.value = '';
